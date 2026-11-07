@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Be+Vietnam+Pro:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: one-column phone dashboard, ordered by what a driver checks first:
-   speed + limit → warnings → two temperature gauges → engine stats → tire plan → oil service → thresholds → code discovery.
+   speed + limit → warnings → two temperature gauges → engine stats → tires → tire-code search → oil service → settings → manual tools.
    Deliberately single dark look, like a BMW cluster at night: graphite ground, amber illumination, yellow/red Check Control colors. */
 :root{
   --ink:#0c0f12;
@@ -65,6 +65,7 @@ p{margin:0}
 .btn{font:inherit;font-weight:600;font-size:14px;border-radius:10px;border:1px solid var(--line);background:var(--panel-2);color:var(--text);padding:8px 14px;min-height:40px;cursor:pointer}
 .btn.primary{background:var(--amber);border-color:var(--amber);color:var(--on-amber)}
 .btn.small{font-size:13px;min-height:36px;padding:6px 12px}
+.btn.danger{border-color:var(--crit);color:var(--crit)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 input{font:inherit;font-size:15px;width:100%;min-width:0;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
 input.hex{font-family:var(--f-mono);font-size:14px;text-transform:uppercase}
@@ -81,6 +82,7 @@ label{font-size:12.5px;color:var(--muted)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
 .card-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
 .hint{font-size:12.5px;color:var(--muted)}
+.hint.ok{color:var(--ok)}
 
 /* Check Control list */
 .cc{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
@@ -202,6 +204,22 @@ label{font-size:12.5px;color:var(--muted)}
 .tire.crit{border-color:var(--crit);background:var(--crit-bg)}.tire.crit .p{color:var(--crit)}
 #tFL{grid-column:1;grid-row:1}#tFR{grid-column:3;grid-row:1}#tRL{grid-column:1;grid-row:2}#tRR{grid-column:3;grid-row:2}
 
+/* tire-code search */
+.ts{display:flex;flex-direction:column;gap:12px}
+.refs{display:flex;flex-direction:column;gap:6px}
+.refrow{display:grid;grid-template-columns:minmax(0,1fr) 66px 26px 58px 22px;gap:6px;align-items:center}
+.refrow .pos{font-size:14px}
+.refrow input{padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums}
+.refrow .u{font-size:12px;color:var(--muted)}
+.meter{height:6px;border-radius:3px;background:var(--panel-2);overflow:hidden}
+.meter>div{height:100%;width:0;background:var(--amber);transition:width .3s}
+.cands{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.cands li{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--panel-2);display:flex;flex-direction:column;gap:2px;min-width:0}
+.cands li.strong{border-color:var(--ok);background:var(--ok-bg)}
+.cands .what{font-size:13px;font-weight:600}
+.cands .raw{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);word-break:break-all}
+textarea.out{font-family:var(--f-mono);font-size:11px;width:100%;min-height:140px;background:var(--ink);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px}
+
 /* service */
 .form2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .field{display:flex;flex-direction:column;gap:4px;min-width:0}
@@ -209,6 +227,8 @@ label{font-size:12.5px;color:var(--muted)}
 .svc{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-top:12px}
 .svc .big{font-family:var(--f-num);font-size:38px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
 .svc .big.warn{color:var(--warn)}.svc .big.crit{color:var(--crit)}.svc .big.ok{color:var(--ok)}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--text);cursor:pointer}
+.check input{width:20px;height:20px;padding:0;accent-color:var(--amber);flex:none;margin-top:1px}
 
 /* details */
 details.card>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
@@ -249,10 +269,10 @@ img{max-width:100%}
 
   <section id="btNotice" class="notice" hidden>
     <strong>Trang đang mở ở nơi chưa dùng được Bluetooth.</strong>
-    <p>Khung xem trong app Claude chặn Bluetooth, nên ở đây chỉ xem được dữ liệu mẫu. Để đọc xe thật:</p>
+    <p>Ở đây chỉ xem được dữ liệu mẫu. Để đọc xe thật:</p>
     <ol>
-      <li>Đưa file HTML lên một địa chỉ https (ví dụ GitHub Pages), rồi mở bằng <b>Chrome trên Android</b>. iPhone dùng app <b>Bluefy</b>.</li>
-      <li>Bật khóa điện xe, cắm vLinker vào cổng OBD dưới vô lăng.</li>
+      <li>Mở <b>Chrome trên Android</b>, dán link https://manhhai1812-dev.github.io/manhhai.github.io/</li>
+      <li>Nổ máy, cắm vLinker vào cổng OBD dưới vô lăng.</li>
       <li>Tắt BimmerCode, BimmerLink nếu đang mở, vì thiết bị chỉ nhận một app mỗi lúc.</li>
       <li>Bấm <b>Kết nối</b>, chọn thiết bị tên <b>vLinker</b>. Nếu Chrome xin quyền Thiết bị lân cận hoặc Vị trí, chọn Cho phép.</li>
     </ol>
@@ -284,7 +304,7 @@ img{max-width:100%}
       <div class="gauge">
         <svg id="gOil" viewBox="0 0 120 96" role="img" aria-label="Nhiệt độ dầu máy"></svg>
         <div class="g-name">Dầu máy</div>
-        <div class="g-src" id="srcOil">Mã BMW · đang thử</div>
+        <div class="g-src" id="srcOil">OBD chuẩn · PID 5C</div>
       </div>
     </section>
 
@@ -320,6 +340,32 @@ img{max-width:100%}
     <ul class="cc" id="ccList"></ul>
   </section>
 
+  <section class="card ts" id="tsCard" aria-labelledby="tsTitle">
+    <div class="card-head" style="margin-bottom:0"><h2 id="tsTitle">Tìm mã áp suất lốp</h2><span class="hint" id="tsState">Chưa chạy</span></div>
+    <p class="muted">Chạy xe đến khi iDrive hiện số 4 lốp, đỗ lại và để máy nổ. Sửa các ô dưới đây cho khớp số đang hiện trong iDrive, rồi bấm <b>Bắt đầu tìm</b>. Trang hỏi lần lượt các hộp điều khiển, mất khoảng 10–25 phút. Dừng giữa chừng hoặc mất kết nối thì bấm <b>Tiếp tục</b>, không mất phần đã dò.</p>
+    <div class="refs" id="refs">
+      <div class="refrow"><span class="pos">Trước trái</span><input id="rpFL" type="number" step="0.1" inputmode="decimal" aria-label="Trước trái, bar"><span class="u">bar</span><input id="rtFL" type="number" step="1" inputmode="numeric" aria-label="Trước trái, độ C"><span class="u">°C</span></div>
+      <div class="refrow"><span class="pos">Trước phải</span><input id="rpFR" type="number" step="0.1" inputmode="decimal" aria-label="Trước phải, bar"><span class="u">bar</span><input id="rtFR" type="number" step="1" inputmode="numeric" aria-label="Trước phải, độ C"><span class="u">°C</span></div>
+      <div class="refrow"><span class="pos">Sau trái</span><input id="rpRL" type="number" step="0.1" inputmode="decimal" aria-label="Sau trái, bar"><span class="u">bar</span><input id="rtRL" type="number" step="1" inputmode="numeric" aria-label="Sau trái, độ C"><span class="u">°C</span></div>
+      <div class="refrow"><span class="pos">Sau phải</span><input id="rpRR" type="number" step="0.1" inputmode="decimal" aria-label="Sau phải, bar"><span class="u">bar</span><input id="rtRR" type="number" step="1" inputmode="numeric" aria-label="Sau phải, độ C"><span class="u">°C</span></div>
+    </div>
+    <p class="muted">Đã điền sẵn theo ảnh iDrive lúc 18:57 ngày 7/11. Gán nhầm bánh cũng không sao, trang chỉ so các con số.</p>
+    <div class="row">
+      <button class="btn primary" id="tsStart" type="button" disabled>Bắt đầu tìm</button>
+      <button class="btn" id="tsResume" type="button" hidden disabled>Tiếp tục</button>
+      <button class="btn" id="tsStop" type="button" disabled>Dừng</button>
+    </div>
+    <div class="meter" aria-hidden="true"><div id="tsBar"></div></div>
+    <div class="prog" id="tsProg" aria-live="polite"></div>
+    <ul class="cands" id="tsCands" hidden></ul>
+    <div class="row">
+      <button class="btn small" id="tsCopy" type="button">Sao chép kết quả</button>
+      <button class="btn small" id="tsDl" type="button">Tải file .txt</button>
+      <span class="copymsg" id="tsMsg" aria-live="polite"></span>
+    </div>
+    <textarea class="out" id="tsOut" readonly hidden aria-label="Kết quả dò mã"></textarea>
+  </section>
+
   <section class="card" aria-labelledby="svcTitle">
     <div class="card-head"><h2 id="svcTitle">Thay dầu máy</h2></div>
     <p class="muted">Xem hạn trong iDrive: Vehicle Info → Vehicle status → Service required (Engine oil), rồi nhập lại ở đây để được nhắc.</p>
@@ -331,7 +377,7 @@ img{max-width:100%}
   </section>
 
   <details class="card" id="setCard">
-    <summary><h2>Ngưỡng cảnh báo</h2><span class="hint">Lốp, nhiệt độ</span></summary>
+    <summary><h2>Cài đặt</h2><span class="hint">Ngưỡng cảnh báo, tốc độ đọc</span></summary>
     <div class="dbody">
       <div class="form2">
         <div class="field"><label for="setTireWarn">Lốp thấp dưới (bar)</label><input type="number" id="setTireWarn" step="0.1" min="0.5" max="4"></div>
@@ -339,14 +385,15 @@ img{max-width:100%}
         <div class="field"><label for="setCoolant">Nước mát nóng từ (°C)</label><input type="number" id="setCoolant" step="1" min="90" max="130"></div>
         <div class="field"><label for="setOil">Dầu nóng từ (°C)</label><input type="number" id="setOil" step="1" min="100" max="150"></div>
       </div>
-      <p class="muted">Lốp cũng bị báo thấp khi một lốp kém các lốp còn lại hơn 0.3 bar. Áp suất chuẩn in trên khung cửa tài xế.</p>
+      <p class="muted">Lốp cũng bị báo thấp khi một lốp kém các lốp còn lại hơn 0.3 bar. Áp suất chuẩn in trên tem ở khung cửa tài xế.</p>
+      <label class="check" for="setSlow"><input type="checkbox" id="setSlow"><span>Đọc chậm, khoảng 2 giây một lần. Bật nếu nhạc Bluetooth bị rè hoặc ngắt khi trang đang đọc.</span></label>
     </div>
   </details>
 
   <details class="card" id="lab">
-    <summary><h2>Dò mã</h2><span class="hint">Bước 2: tìm mã lốp, mức nước, mức dầu</span></summary>
+    <summary><h2>Dò mã thủ công</h2><span class="hint">Nhật ký và lệnh tự nhập</span></summary>
     <div class="dbody">
-      <p class="muted">Mọi lệnh ở đây chỉ đọc dữ liệu. Lệnh ghi, xóa lỗi, khởi động lại hộp hay đổi chế độ chẩn đoán đều bị chặn. Đỗ xe, bật khóa điện khi dò.</p>
+      <p class="muted">Mọi lệnh ở đây chỉ đọc dữ liệu. Lệnh ghi, xóa lỗi, khởi động lại hộp hay đổi chế độ chẩn đoán đều bị chặn. Đỗ xe khi dò.</p>
       <div class="row">
         <button class="btn small" id="btnScanEcu" type="button" data-lab disabled>Quét hộp điều khiển</button>
         <button class="btn small" id="btnOilTest" type="button" data-lab disabled>Thử mã nhiệt độ dầu</button>
@@ -357,8 +404,8 @@ img{max-width:100%}
       <div class="group">
         <h3>Đọc một mã</h3>
         <div class="row">
-          <div class="field"><label for="inEcu">Hộp (hex)</label><input class="hex" id="inEcu" value="12" maxlength="2"></div>
-          <div class="field"><label for="inDid">Mã DID (hex)</label><input class="hex" id="inDid" value="4402" maxlength="4"></div>
+          <div class="field"><label for="inEcu">Hộp (hex)</label><input class="hex" id="inEcu" value="40" maxlength="2"></div>
+          <div class="field"><label for="inDid">Mã DID (hex)</label><input class="hex" id="inDid" value="F190" maxlength="4"></div>
           <button class="btn small" id="btnRead" type="button" data-lab disabled>Đọc</button>
         </div>
       </div>
@@ -366,8 +413,8 @@ img{max-width:100%}
       <div class="group">
         <h3>Quét một dải mã</h3>
         <div class="row">
-          <div class="field"><label for="inScanEcu">Hộp (hex)</label><input class="hex" id="inScanEcu" value="12" maxlength="2"></div>
-          <div class="field"><label for="inFrom">Từ DID</label><input class="hex" id="inFrom" value="4400" maxlength="4"></div>
+          <div class="field"><label for="inScanEcu">Hộp (hex)</label><input class="hex" id="inScanEcu" value="40" maxlength="2"></div>
+          <div class="field"><label for="inFrom">Từ DID</label><input class="hex" id="inFrom" value="D000" maxlength="4"></div>
           <div class="field"><label for="inCount">Số mã</label><input id="inCount" type="number" value="64" min="1" max="512"></div>
           <button class="btn small" id="btnScan" type="button" data-lab disabled>Quét</button>
         </div>
@@ -393,7 +440,8 @@ img{max-width:100%}
 
   <footer class="foot">
     <p>Tốc độ trên trang là tốc độ thực đọc từ OBD, thường thấp hơn kim đồng hồ trên xe vài km/h; máy bắn tốc độ cũng đo tốc độ thực. Số chuyển vàng khi còn 3 km/h là chạm giới hạn, chuyển đỏ và bíp khi đã vượt.</p>
-    <p>Nước mát, vòng tua, tốc độ, khí nạp đọc bằng mã OBD chuẩn. Nhiệt độ dầu đang thử mã riêng của BMW: hãy so với kim nhiệt độ dầu trên đồng hồ xe. Áp suất lốp và cảnh báo mức nước mát, nước rửa kính, mức dầu sẽ chạy sau khi dò được mã.</p>
+    <p>Bản 2 · 7/11/2026. Nước mát, vòng tua, tốc độ, khí nạp đọc bằng mã OBD chuẩn. Nhiệt độ dầu dùng mã PID 5C, đã đối chiếu ngày 7/11: trang đọc 112°C, mã riêng của BMW cũng ra 112.5°C, kim đồng hồ xe gần vạch 120.</p>
+    <p>Mức nước mát, nước rửa kính và mức dầu chưa đọc được từ trang. Đồng hồ xe vẫn tự báo các cảnh báo này như bình thường.</p>
     <p>Đặt điện thoại trên giá, không thao tác khi đang lái.</p>
   </footer>
 </div>
@@ -401,6 +449,7 @@ img{max-width:100%}
 <script>
 (function(){
 'use strict';
+const VERSION='Bản 2';
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const fmt=(v,d=0)=>(v==null||!isFinite(v))?'--':Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -410,12 +459,20 @@ const didStr=d=>hx(d>>8)+hx(d&255);
 const pad8=a=>{const r=a.slice();while(r.length<8)r.push(0);return r;};
 function isoLocal(addDays){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+addDays);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function daysUntil(iso){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||'');if(!m)return null;const due=new Date(+m[1],+m[2]-1,+m[3]);const t=new Date();t.setHours(0,0,0,0);return Math.round((due-t)/86400000);}
+function stamp(){const t=new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0')+' '+[t.getHours(),t.getMinutes()].map(n=>String(n).padStart(2,'0')).join(':');}
 
 /* ---------- Cài đặt (lưu trên máy này) ---------- */
+const WHEELS=['FL','FR','RL','RR'];
 const SKEY='f30-gauges-v1';
-const DEF={tireWarn:2.0,tireCrit:1.6,coolantMax:118,oilMax:130,svcDate:'',svcKm:'',speedLimit:0,beep:true};
-let settings={...DEF};
-try{settings={...DEF,...JSON.parse(localStorage.getItem(SKEY)||'{}')};}catch(e){}
+const DEF_REF={FL:{bar:2.0,c:41},FR:{bar:2.0,c:41},RL:{bar:2.0,c:35},RR:{bar:2.0,c:34}};
+const DEF={tireWarn:2.0,tireCrit:1.6,coolantMax:118,oilMax:130,svcDate:'',svcKm:'',speedLimit:0,beep:true,slow:false,ref:DEF_REF};
+let settings={...DEF,ref:JSON.parse(JSON.stringify(DEF_REF))};
+try{
+  const s=JSON.parse(localStorage.getItem(SKEY)||'{}');
+  const ref=JSON.parse(JSON.stringify(DEF_REF));
+  if(s.ref)for(const k of WHEELS)if(s.ref[k])ref[k]={...ref[k],...s.ref[k]};
+  settings={...DEF,...s,ref};
+}catch(e){}
 function saveSettings(){try{localStorage.setItem(SKEY,JSON.stringify(settings));}catch(e){}}
 
 /* ---------- Dữ liệu ---------- */
@@ -426,36 +483,41 @@ const SAMPLE={coolant:96,oil:104,rpm:1850,speed:57,intake:34,volt:14.1,
   coolantLevel:false,washer:true,oilLevel:false,svcDate:isoLocal(45),svcKm:8500};
 let mode='demo';
 
-/* Mã nhiệt độ dầu cần thử (chưa xác nhận trên xe này) */
+/* Nhiệt độ dầu: PID 5C đã đối chiếu ngày 7/11 (112°C, khớp DID 4402 = 112.5°C) */
 const OIL=[
   {label:'OBD chuẩn · PID 5C',std:0x5C,dec:d=>d[0]-40},
-  {label:'DME 12 · DID 4402',ecu:0x12,did:0x4402,min:2,dec:d=>((d[0]<<8)|d[1])*0.75-48},
-  {label:'DME 12 · DID 5822',ecu:0x12,did:0x5822,min:1,dec:d=>d[0]-40},
-  {label:'DME 12 · DID 4408',ecu:0x12,did:0x4408,min:2,dec:d=>((d[0]<<8)|d[1])*0.1}
+  {label:'DME 12 · DID 4402',ecu:0x12,did:0x4402,min:2,dec:d=>((d[0]<<8)|d[1])*0.75-48}
 ];
 let oilSrc=null;
-/* Bản 2 sẽ điền mã đã xác nhận cho lốp và các cảnh báo mức chất lỏng */
+/* Bản 3 sẽ điền mã lốp sau khi dò */
 const TIRE_SOURCE=null;
-const LEVEL_SOURCES=null;
 
-const ECU_NAMES={0x12:'DME (động cơ)',0x18:'EGS (hộp số)',0x29:'DSC (phanh, cân bằng)',0x40:'FEM (điện thân xe)',0x60:'KOMBI (cụm đồng hồ)',0x63:'NBT (màn hình iDrive)'};
+const ECU_NAMES={0x01:'ACSM (túi khí)',0x10:'ZGM (cổng trung tâm)',0x12:'DME (động cơ)',0x18:'EGS (hộp số)',0x29:'DSC (phanh, cân bằng)',0x30:'EPS (trợ lực lái)',0x40:'FEM (điện thân xe)',0x60:'KOMBI (cụm đồng hồ)',0x63:'NBT (màn hình iDrive)',0x78:'IHKA (điều hòa)'};
 const NRC={0x10:'từ chối chung',0x11:'không hỗ trợ dịch vụ',0x12:'không hỗ trợ',0x13:'sai độ dài',0x22:'chưa đủ điều kiện',0x31:'không có mã này',0x33:'cần mở khóa bảo mật',0x7E:'cần đổi chế độ',0x7F:'cần đổi chế độ'};
 
 /* ---------- Nhật ký ---------- */
-const logLines=[];
+const logLines=[];let logPending=[],logScheduled=false;
+function flushLog(){
+  logScheduled=false;
+  const el=$('log');if(!logPending.length)return;
+  el.appendChild(document.createTextNode(logPending.join('\n')+'\n'));logPending=[];
+  while(el.childNodes.length>60)el.removeChild(el.firstChild);
+  el.scrollTop=el.scrollHeight;
+}
 function log(s){
   const t=new Date();
   const ts=[t.getHours(),t.getMinutes(),t.getSeconds()].map(n=>String(n).padStart(2,'0')).join(':');
-  logLines.push(ts+'  '+s);
-  if(logLines.length>600)logLines.splice(0,logLines.length-600);
-  const el=$('log');el.textContent=logLines.join('\n');el.scrollTop=el.scrollHeight;
+  const line=ts+'  '+s;
+  logLines.push(line);if(logLines.length>4000)logLines.splice(0,500);
+  logPending.push(line);
+  if(!logScheduled){logScheduled=true;(window.requestAnimationFrame||setTimeout)(flushLog);}
 }
 function prog(s){$('labProg').textContent=s;}
 
 /* ---------- Bluetooth + ELM327 ---------- */
 const SERVICES=[0xfff0,0xffe0,0x18f0,0xbeef,'e7810a71-73ae-499d-8c15-faa9aef0c3f2','6e400001-b5a3-f393-e0a9-e50e24dcca9e','49535343-fe7d-4ae5-8fa9-9fafd205e455'];
 const enc=new TextEncoder(),dec=new TextDecoder();
-let dev=null,txChar=null,rxChar=null,useNoResp=false;
+let dev=null,txChar=null,rxChar=null,useNoResp=false,countOK=false;
 let rxBuf='',waiter=null,sendQ=Promise.resolve(),lock=Promise.resolve();
 let curTx='',curRx='';
 
@@ -471,12 +533,14 @@ async function writeRaw(str){
     if(useNoResp)await txChar.writeValueWithoutResponse(chunk);else await txChar.writeValue(chunk);
   }
 }
-function send(line,timeout=3000){
+/* count: số khung trả lời cần chờ. vLinker trả về ngay khi đủ, nhanh hơn nhiều khi dò hàng nghìn mã */
+function send(line,timeout=3000,count=0){
+  const cmd=(countOK&&count>0&&count<16)?line+' '+count.toString(16).toUpperCase():line;
   const job=()=>new Promise((resolve,reject)=>{
     if(!txChar){reject(new Error('Chưa kết nối'));return;}
     rxBuf='';
     waiter={resolve,timer:setTimeout(()=>{waiter=null;resolve('TIMEOUT');},timeout)};
-    writeRaw(line+'\r').catch(err=>{if(waiter){clearTimeout(waiter.timer);waiter=null;}reject(err);});
+    writeRaw(cmd+'\r').catch(err=>{if(waiter){clearTimeout(waiter.timer);waiter=null;}reject(err);});
   });
   const p=sendQ.then(job,job);sendQ=p.then(()=>{},()=>{});return p;
 }
@@ -502,7 +566,7 @@ async function isotpInner(tx,rx,ext,payload){
   if(pre.length+1+payload.length>8)throw new Error('Lệnh quá dài');
   await setIds(tx,rx);
   for(let attempt=0;attempt<3;attempt++){
-    const first=frames(await send(hexs(pad8([...pre,payload.length,...payload]))),rx);
+    const first=frames(await send(hexs(pad8([...pre,payload.length,...payload])),3000,1),rx);
     let out=null,total=0;
     for(const f of first){
       const d=ext==null?f:(f[0]===0xF1?f.slice(1):null);
@@ -513,8 +577,9 @@ async function isotpInner(tx,rx,ext,payload){
     }
     if(!out)return null;
     if(total){
+      const need=Math.ceil(Math.max(0,total-(ext==null?6:5))/(ext==null?7:6));
       if(tx==='7DF'){await send('ATSH7E0');curTx='7E0';}
-      const more=frames(await send(hexs(pad8([...pre,0x30,0x00,0x00]))),rx);
+      const more=frames(await send(hexs(pad8([...pre,0x30,0x00,0x00])),3000,need),rx);
       for(const f of more){
         const d=ext==null?f:(f[0]===0xF1?f.slice(1):null);
         if(!d||(d[0]>>4)!==2)continue;
@@ -548,64 +613,100 @@ const plausible=v=>v!=null&&isFinite(v)&&v>-40&&v<160;
 
 async function initElm(){
   log('Khởi tạo vLinker…');
+  countOK=false;
   log('ATZ → '+clean(await send('ATZ',6000)));
   for(const c of ['ATE0','ATL0','ATS1','ATH1','ATD0','ATSP6','ATCAF0','ATAT1']){log(c+' → '+clean(await send(c)));}
   curTx='';curRx='';
+  await setIds('7DF','7E8');
+  const t=(await send('02 01 00 00 00 00 00 00 1')).toUpperCase();
+  countOK=!t.includes('?')&&t.includes('7E8');
+  log('Chế độ hỏi nhanh: '+(countOK?'bật':'tắt'));
 }
 async function detectOil(){
-  log('— Tìm mã nhiệt độ dầu —');
   oilSrc=null;
   for(const c of OIL){
     const r=await readCand(c);
     log(c.label+': '+(r.v!=null?fmt(r.v,1)+'°C (thô '+hexs(r.raw)+')':r.nrc!=null?'từ chối, '+(NRC[r.nrc]||'NRC '+hx(r.nrc)):'không trả lời'));
-    if(!oilSrc&&plausible(r.v)){oilSrc=c;live.oil=r.v;}
+    if(plausible(r.v)){oilSrc=c;live.oil=r.v;break;}
   }
-  log(oilSrc?'Đang dùng: '+oilSrc.label+'. So với kim nhiệt độ dầu trên đồng hồ xe.':'Chưa có mã nào cho kết quả hợp lý.');
+  log(oilSrc?'Nhiệt độ dầu: dùng '+oilSrc.label+'.':'Không đọc được nhiệt độ dầu.');
 }
 
 /* ---------- Kết nối ---------- */
 let polling=false,cycle=0,labBusy=false,stopFlag=false,wake=null;
+let userClosed=false,reconnecting=false,forceChooser=false;
 function setPill(cls,text){const p=$('connPill');p.className='pill '+(cls||'');p.textContent=text;}
 function setLabEnabled(){
   document.querySelectorAll('[data-lab]').forEach(b=>{b.disabled=labBusy||!txChar;});
   $('btnStop').disabled=!labBusy;
+  updateScanUI();
 }
 async function keepAwake(){try{if(navigator.wakeLock&&document.visibilityState==='visible')wake=await navigator.wakeLock.request('screen');}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(txChar&&document.visibilityState==='visible')keepAwake();});
+const withTimeout=(p,ms,msg)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error(msg)),ms))]);
 
+async function openGatt(d){
+  const server=await d.gatt.connect();
+  const svcs=await server.getPrimaryServices();
+  let found=null;
+  for(const s of svcs){
+    let chars=[];try{chars=await s.getCharacteristics();}catch(e){continue;}
+    let n=null,w=null;
+    for(const c of chars){const p=c.properties;if(!n&&(p.notify||p.indicate))n=c;if(!w&&(p.write||p.writeWithoutResponse))w=c;}
+    if(n&&w){found={s,n,w};break;}
+  }
+  if(!found)throw new Error('Không tìm thấy kênh dữ liệu. Hãy chọn đúng thiết bị tên vLinker.');
+  rxBuf='';waiter=null;curTx='';curRx='';
+  await found.n.startNotifications();
+  found.n.addEventListener('characteristicvaluechanged',onNotify);
+  rxChar=found.n;txChar=found.w;
+  useNoResp=!!txChar.properties.writeWithoutResponse&&typeof txChar.writeValueWithoutResponse==='function';
+  return found.s.uuid;
+}
+function attach(d){if(d.__f30)return;d.__f30=true;d.addEventListener('gattserverdisconnected',onDisconnect);}
+async function startSession(){
+  await locked(initElm);
+  if(mode!=='live'){mode='live';live=emptyLive();}
+  $('subLine').textContent='BMW 320i · '+(dev&&dev.name||'vLinker')+' · đọc qua cổng OBD';
+  $('btnConnect').textContent='Ngắt';
+  render();setLabEnabled();
+  if(!oilSrc)await detectOil();
+  setPill('ok','Đã kết nối');
+  keepAwake();
+  pollLoop();
+}
 async function connect(){
   if(!navigator.bluetooth){$('btNotice').hidden=false;$('btNotice').scrollIntoView({behavior:'smooth',block:'center'});return;}
+  userClosed=false;
   setPill('busy','Đang tìm thiết bị…');
   try{
-    dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:SERVICES});
-    dev.addEventListener('gattserverdisconnected',onDisconnect);
-    setPill('busy','Đang kết nối…');
-    const server=await dev.gatt.connect();
-    const svcs=await server.getPrimaryServices();
-    let found=null;
-    for(const s of svcs){
-      let chars=[];try{chars=await s.getCharacteristics();}catch(e){continue;}
-      let n=null,w=null;
-      for(const c of chars){const p=c.properties;if(!n&&(p.notify||p.indicate))n=c;if(!w&&(p.write||p.writeWithoutResponse))w=c;}
-      if(n&&w){found={s,n,w};break;}
+    if(!forceChooser&&navigator.bluetooth.getDevices){
+      let d=null;
+      try{const list=await navigator.bluetooth.getDevices();d=list.find(x=>/vlinker|vgate|obd/i.test(x.name||''))||null;}catch(e){d=null;}
+      if(d){
+        try{
+          attach(d);setPill('busy','Đang kết nối '+(d.name||'')+'…');
+          const u=await withTimeout(openGatt(d),9000,'hết thời gian chờ');
+          dev=d;log('Đã kết nối '+(d.name||'thiết bị')+' · kênh '+u);
+          await startSession();return;
+        }catch(e){
+          try{if(d.gatt.connected)d.gatt.disconnect();}catch(_){}
+          forceChooser=true;
+          setPill('','Bấm Kết nối lần nữa');
+          log('Không tự kết nối lại được ('+e.message+'). Bấm Kết nối lần nữa để chọn thiết bị.');
+          return;
+        }
+      }
     }
-    if(!found)throw new Error('Không tìm thấy kênh dữ liệu. Hãy chọn đúng thiết bị tên vLinker.');
-    rxChar=found.n;txChar=found.w;
-    useNoResp=!!txChar.properties.writeWithoutResponse&&typeof txChar.writeValueWithoutResponse==='function';
-    await rxChar.startNotifications();
-    rxChar.addEventListener('characteristicvaluechanged',onNotify);
-    log('Đã kết nối '+(dev.name||'thiết bị')+' · kênh '+found.s.uuid);
-    $('subLine').textContent='BMW 320i · '+(dev.name||'vLinker')+' · đọc qua cổng OBD';
-    await locked(initElm);
-    mode='live';live=emptyLive();render();
-    $('btnConnect').textContent='Ngắt';
-    setLabEnabled();
-    await detectOil();
-    setPill('ok','Đã kết nối');
-    keepAwake();
-    pollLoop();
+    forceChooser=false;
+    const d=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:SERVICES});
+    attach(d);dev=d;
+    setPill('busy','Đang kết nối…');
+    const u=await openGatt(d);
+    log('Đã kết nối '+(d.name||'thiết bị')+' · kênh '+u);
+    await startSession();
   }catch(e){
-    if(e&&e.name==='NotFoundError'){setPill('', txChar?'Đã kết nối':'Chưa kết nối');return;}
+    if(e&&e.name==='NotFoundError'){setPill('',txChar?'Đã kết nối':'Chưa kết nối');return;}
     if(e&&(e.name==='SecurityError'||e.name==='NotAllowedError')){$('btNotice').hidden=false;}
     setPill('crit','Lỗi kết nối');
     log('Lỗi kết nối: '+(e&&e.message?e.message:e));
@@ -614,16 +715,40 @@ async function connect(){
 function onDisconnect(){
   polling=false;txChar=null;rxChar=null;
   if(waiter){clearTimeout(waiter.timer);const w=waiter;waiter=null;w.resolve('TIMEOUT');}
-  setPill('crit','Mất kết nối');
   $('btnConnect').textContent='Kết nối';
   setLabEnabled();
-  try{wake&&wake.release();}catch(e){}
   live.speed=null;render();
-  log('Thiết bị đã ngắt kết nối.');
+  if(userClosed){setPill('','Đã ngắt');log('Đã ngắt kết nối.');try{wake&&wake.release();}catch(e){}return;}
+  if(reconnecting)return;
+  setPill('crit','Mất kết nối');
+  log('Thiết bị đã ngắt kết nối. Đang thử kết nối lại…');
+  autoReconnect();
+}
+async function autoReconnect(){
+  if(reconnecting||!dev)return;
+  reconnecting=true;
+  for(let i=0;i<15&&!txChar&&!userClosed;i++){
+    while(document.visibilityState!=='visible'&&!userClosed)await sleep(1000);
+    if(userClosed)break;
+    setPill('busy','Đang kết nối lại…');
+    try{
+      await withTimeout(openGatt(dev),9000,'hết thời gian chờ');
+      log('Đã kết nối lại.');
+      await startSession();
+      reconnecting=false;
+      return;
+    }catch(e){
+      txChar=null;rxChar=null;
+      try{if(dev.gatt.connected)dev.gatt.disconnect();}catch(_){}
+      await sleep(Math.min(3000+i*2000,15000));
+    }
+  }
+  reconnecting=false;
+  if(!txChar&&!userClosed){setPill('crit','Mất kết nối');log('Không kết nối lại được. Bấm Kết nối.');}
 }
 $('btnConnect').addEventListener('click',()=>{
   ensureAudio();
-  if(txChar&&dev&&dev.gatt.connected){dev.gatt.disconnect();return;}
+  if(txChar&&dev&&dev.gatt.connected){userClosed=true;polling=false;stopFlag=true;dev.gatt.disconnect();return;}
   connect();
 });
 
@@ -643,11 +768,11 @@ async function pollLoop(){
       else if(slot==='oil'){if(oilSrc){const o=await readCand(oilSrc);if(plausible(o.v))live.oil=o.v;}}
       else if(slot==='intake'){const i=await obd(1,0x0F);if(i)live.intake=i[0]-40;}
       else if(slot==='volt'){const v=await locked(()=>send('ATRV'));const m=/(\d+(?:\.\d+)?)\s*V/i.exec(v);if(m)live.volt=parseFloat(m[1]);}
-      if(TIRE_SOURCE){/* bản 2 */}
-      if(LEVEL_SOURCES){/* bản 2 */}
       cycle++;render();
+      if(settings.slow)await sleep(2000);
     }catch(e){log('Lỗi đọc: '+e.message);await sleep(800);}
   }
+  polling=false;
 }
 
 /* ---------- Hiển thị ---------- */
@@ -687,6 +812,7 @@ function worst(states){
   return known.length<states.length?'part':'ok';
 }
 const CHIP={ok:'Bình thường',warn:'Cần kiểm tra',crit:'Cần xử lý',part:'Đọc được một phần',idle:'Chưa đọc được'};
+const NOT_YET='Chưa đọc được từ xe, đồng hồ xe vẫn tự báo';
 function svcInfo(d){
   const date=settings.svcDate||(mode==='demo'?d.svcDate:'');
   const km=settings.svcKm!==''?Number(settings.svcKm):(mode==='demo'?d.svcKm:null);
@@ -697,32 +823,32 @@ function warnings(d){
   { const st=[],msg=[];
     if(d.coolantLevel===true){st.push('crit');msg.push('Mức nước mát thấp, cần bổ sung');}
     else if(d.coolantLevel===false){st.push('ok');msg.push('Mức nước đủ');}
-    else{st.push(null);msg.push('Mức nước: chưa có mã đọc');}
+    else{st.push(null);msg.push('Mức nước: '+NOT_YET.toLowerCase());}
     if(d.coolant==null)st.push(null);
     else if(d.coolant>=settings.coolantMax){st.push('crit');msg.unshift('Nhiệt độ cao '+fmt(d.coolant)+'°C, dừng xe kiểm tra');}
-    else{st.push('ok');msg.push('nhiệt độ '+fmt(d.coolant)+'°C');}
+    else{st.push('ok');msg.unshift('Nhiệt độ '+fmt(d.coolant)+'°C');}
     items.push({name:'Nước làm mát',s:worst(st),det:msg.join(' · ')});
   }
   { let s,m;
     if(d.washer===true){s='warn';m='Sắp hết nước rửa kính, cần bổ sung';}
     else if(d.washer===false){s='ok';m='Đủ nước rửa kính';}
-    else{s='idle';m='Chưa có mã đọc';}
+    else{s='idle';m=NOT_YET;}
     items.push({name:'Nước rửa kính',s,det:m});
   }
-  { const avg=tireAvg(d.tires),probs=[],st=[];let vals=[];
-    for(const k of ['FL','FR','RL','RR']){
+  { const avg=tireAvg(d.tires),probs=[],st=[];const vals=[];
+    for(const k of WHEELS){
       const t=d.tires[k];const s=tireState(t,avg);st.push(s||null);
       if(t)vals.push(t.bar);
       if(s==='crit')probs.push(POS[k]+' '+fmt(t.bar,1)+' bar, có thể bị xịt lốp');
       else if(s==='warn')probs.push(POS[k]+' '+fmt(t.bar,1)+' bar, đang thấp');
     }
-    const det=!vals.length?'Chưa có mã đọc áp suất lốp':probs.length?probs.join(' · '):'4 lốp từ '+fmt(Math.min(...vals),1)+' đến '+fmt(Math.max(...vals),1)+' bar';
+    const det=!vals.length?'Chưa có mã đọc áp suất, đang dò ở mục Tìm mã áp suất lốp':probs.length?probs.join(' · '):'4 lốp từ '+fmt(Math.min(...vals),1)+' đến '+fmt(Math.max(...vals),1)+' bar';
     items.push({name:'Lốp',s:vals.length?worst(st):'idle',det});
   }
   { const st=[],msg=[];
     if(d.oilLevel===true){st.push('warn');msg.push('Mức dầu thấp, cần châm thêm');}
     else if(d.oilLevel===false){st.push('ok');msg.push('Mức dầu đủ');}
-    else{st.push(null);msg.push('Mức dầu: chưa có mã đọc');}
+    else{st.push(null);msg.push('Mức dầu: '+NOT_YET.toLowerCase());}
     const sv=svcInfo(d);
     if(sv.days==null){st.push(null);msg.push('chưa nhập hạn thay dầu');}
     else if(sv.days<0){st.push('crit');msg.unshift('Quá hạn thay dầu '+fmt(-sv.days)+' ngày');}
@@ -738,19 +864,19 @@ function render(){
   $('demoBanner').hidden=mode!=='demo';
   gauge($('gCoolant'),d.coolant,40,130,settings.coolantMax);
   gauge($('gOil'),d.oil,40,150,settings.oilMax);
-  $('srcOil').textContent=mode==='demo'?'Dữ liệu mẫu':oilSrc?oilSrc.label+' · chờ bạn xác nhận':'Chưa tìm được mã';
+  $('srcOil').textContent=mode==='demo'?'Dữ liệu mẫu':oilSrc?oilSrc.label+' · đã đối chiếu':'Chưa đọc được';
   $('srcCoolant').textContent=mode==='demo'?'Dữ liệu mẫu':'OBD chuẩn · PID 05';
   renderSpeed(d.speed);
   $('vRpm').textContent=fmt(d.rpm);
   $('vIntake').textContent=fmt(d.intake);
   $('vVolt').textContent=fmt(d.volt,1);
   const avg=tireAvg(d.tires);
-  for(const k of ['FL','FR','RL','RR']){
+  for(const k of WHEELS){
     const t=d.tires[k],el=$('t'+k);
     el.className='tire '+tireState(t,avg);
     el.innerHTML='<div class="pos">'+POS[k]+'</div><div class="p">'+(t?fmt(t.bar,1):'--')+'<small>bar</small></div><div class="t">'+(t&&t.c!=null?fmt(t.c)+'°C':'-- °C')+'</div>';
   }
-  $('tireHint').textContent=mode==='demo'?'Dữ liệu mẫu':TIRE_SOURCE?'':'Chưa có mã, dùng mục Dò mã';
+  $('tireHint').textContent=mode==='demo'?'Dữ liệu mẫu':TIRE_SOURCE?'':'Chưa có mã, xem mục bên dưới';
   const items=warnings(d);
   $('ccList').innerHTML=items.map(i=>'<li class="s-'+i.s+'"><span class="dot"></span><div><div class="name">'+i.name+'</div><div class="det">'+i.det+'</div></div><span class="chip">'+CHIP[i.s]+'</span></li>').join('');
   const nc=items.filter(i=>i.s==='crit').length,nw=items.filter(i=>i.s==='warn').length;
@@ -835,11 +961,235 @@ function bindNum(id,key){
   el.addEventListener('change',()=>{const v=parseFloat(el.value);if(isFinite(v)){settings[key]=v;saveSettings();render();}else el.value=settings[key];});
 }
 bindNum('setTireWarn','tireWarn');bindNum('setTireCrit','tireCrit');bindNum('setCoolant','coolantMax');bindNum('setOil','oilMax');
+$('setSlow').checked=!!settings.slow;
+$('setSlow').addEventListener('change',e=>{settings.slow=e.target.checked;saveSettings();});
 $('svcDate').value=settings.svcDate;$('svcKm').value=settings.svcKm;
 $('svcDate').addEventListener('change',e=>{settings.svcDate=e.target.value;saveSettings();render();});
 $('svcKm').addEventListener('change',e=>{settings.svcKm=e.target.value===''?'':String(Math.max(0,Math.round(+e.target.value)));saveSettings();render();});
+for(const k of WHEELS){
+  const p=$('rp'+k),t=$('rt'+k);
+  p.value=Number(settings.ref[k].bar).toFixed(1);t.value=settings.ref[k].c;
+  p.addEventListener('change',()=>{const v=parseFloat(p.value);if(isFinite(v)&&v>0.5&&v<5){settings.ref[k].bar=v;saveSettings();}p.value=Number(settings.ref[k].bar).toFixed(1);});
+  t.addEventListener('change',()=>{const v=parseFloat(t.value);if(isFinite(v)&&v>-30&&v<120){settings.ref[k].c=v;saveSettings();}else t.value=settings.ref[k].c;});
+}
 
-/* ---------- Dò mã ---------- */
+/* ---------- Tìm mã áp suất lốp ---------- */
+const PLAN=[
+  {ecu:0x40,from:0xD000,to:0xDFFF},
+  {ecu:0x60,from:0xD000,to:0xDFFF},
+  {ecu:0x40,from:0x4000,to:0x4FFF},
+  {ecu:0x63,from:0xD000,to:0xDFFF},
+  {ecu:0x12,from:0x4000,to:0x4FFF}
+];
+const segName=s=>(ECU_NAMES[s.ecu]||('Hộp 0x'+hx(s.ecu)))+' · '+didStr(s.from)+'–'+didStr(s.to);
+const PLAN_TOTAL=PLAN.reduce((a,s)=>a+s.to-s.from+1,0);
+const SCAN_KEY='f30-tire-scan-v2';
+const freshScan=()=>({seg:0,next:PLAN[0].from,done:false,hits:[],cands:[],asked:0,nHits:0,started:'',device:'',pair:{}});
+let scan=freshScan();
+try{const s=JSON.parse(localStorage.getItem(SCAN_KEY)||'null');if(s&&Array.isArray(s.hits))scan={...freshScan(),...s};}catch(e){}
+function saveScan(){try{localStorage.setItem(SCAN_KEY,JSON.stringify(scan));}catch(e){}}
+let scanRunning=false,msPerDid=100,confirmReset=0,scanMsg=null;
+
+/* So khớp dữ liệu với số iDrive theo vài kiểu mã hóa thường gặp */
+const T_BYTE=[0,40,48,50,52,55,60,64].map(o=>({k:o?'A−'+o:'A',f:b=>b-o}));
+const T_WORD=[{k:'AB×0.1',f:u=>u*0.1},{k:'AB×0.1−273',f:u=>u*0.1-273.15},{k:'AB×0.01',f:u=>u*0.01}];
+const P_BYTE=[{k:'A×0.025',f:b=>b*0.025},{k:'A×0.025−1',f:b=>b*0.025-1},{k:'A×0.1',f:b=>b*0.1},{k:'A×0.01',f:b=>b*0.01},{k:'A×0.02',f:b=>b*0.02}];
+const P_WORD=[{k:'AB×0.001',f:u=>u*0.001},{k:'AB×0.001−1',f:u=>u*0.001-1.013},{k:'AB×0.01',f:u=>u*0.01},{k:'AB×0.01−1',f:u=>u*0.01-1.013},{k:'AB psi×0.1',f:u=>u*0.1/14.504}];
+function countMatch(vals,refs,tol){
+  const used=new Array(vals.length).fill(false);let n=0;
+  for(const r of refs){for(let i=0;i<vals.length;i++){if(!used[i]&&Math.abs(vals[i]-r)<=tol){used[i]=true;n++;break;}}}
+  return n;
+}
+function bestEnc(data,refs,tol,byteEncs,wordEncs){
+  let best={n:0,k:''};
+  for(const e of byteEncs){const n=countMatch(data.map(e.f),refs,tol);if(n>best.n)best={n,k:e.k};}
+  if(data.length>=2){
+    const w=[];for(let i=0;i+1<data.length;i+=2)w.push((data[i]<<8)|data[i+1]);
+    const w2=[];for(let i=1;i+1<data.length;i+=2)w2.push((data[i]<<8)|data[i+1]);
+    for(const arr of [w,w2])for(const e of wordEncs){const n=countMatch(arr.map(e.f),refs,tol);if(n>best.n)best={n,k:e.k};}
+  }
+  return best;
+}
+function classify(data){
+  if(!data.length||data.length>48)return null;
+  const rT=WHEELS.map(k=>settings.ref[k].c),rP=WHEELS.map(k=>settings.ref[k].bar);
+  const t=bestEnc(data,rT,1.5,T_BYTE,T_WORD),p=bestEnc(data,rP,0.05,P_BYTE,P_WORD);
+  const tt=t.n+'/4 nhiệt độ khớp ('+t.k+')',pp=p.n+'/4 áp suất khớp ('+p.k+')';
+  if(data.length<=32&&((t.n>=4&&p.n>=3)||(t.n>=3&&p.n>=4)))return{strong:true,desc:tt+' · '+pp};
+  if(t.n>=4&&data.length<=24)return{strong:false,desc:tt};
+  if(p.n>=4&&data.length<=24)return{strong:false,desc:pp};
+  return null;
+}
+function renderCands(){
+  const cs=scan.cands.slice().sort((a,b)=>(b.strong?1:0)-(a.strong?1:0)).slice(0,20);
+  const ul=$('tsCands');
+  ul.innerHTML=cs.map(c=>'<li class="'+(c.strong?'strong':'')+'"><span class="what">'+(c.strong?'Khớp mạnh · ':'Có thể · ')+'hộp 0x'+hx(c.e)+' · mã '+didStr(c.d)+' · '+c.desc+'</span><span class="raw">'+c.raw+'</span></li>').join('');
+  ul.hidden=!cs.length;
+}
+function doneCount(){
+  if(scan.done)return PLAN_TOTAL;
+  let n=0;
+  PLAN.forEach((s,i)=>{const size=s.to-s.from+1;if(i<scan.seg)n+=size;else if(i===scan.seg)n+=Math.max(0,Math.min(size,scan.next-s.from));});
+  return n;
+}
+function progressText(){
+  return PLAN.map((s,i)=>segName(s)+': '+(scan.done||i<scan.seg?'xong':i===scan.seg&&scan.next>s.from?'đến '+didStr(scan.next):'chưa')).join('\n');
+}
+function updateScanUI(msg){
+  const done=doneCount(),connected=!!txChar;
+  $('tsBar').style.width=(100*done/PLAN_TOTAL).toFixed(1)+'%';
+  const strong=scan.cands.filter(c=>c.strong).length;
+  const hasProgress=scan.asked>0;
+  $('tsState').textContent=scanRunning?'Đang dò':scan.done?'Đã dò xong':strong?'Đã thấy dữ liệu khớp':hasProgress?'Đang tạm dừng':'Chưa chạy';
+  $('tsState').className='hint'+(strong?' ok':'');
+  const busy=labBusy||!connected;
+  $('tsResume').hidden=!(hasProgress&&!scan.done);
+  $('tsResume').disabled=busy;
+  $('tsStart').disabled=busy;
+  $('tsStart').textContent=confirmReset?'Bấm lần nữa để dò lại từ đầu':hasProgress?'Dò lại từ đầu':'Bắt đầu tìm';
+  $('tsStart').className='btn '+(hasProgress&&!scan.done?'':'primary')+(confirmReset?' danger':'');
+  $('tsResume').className='btn primary';
+  $('tsStop').disabled=!scanRunning;
+  if(msg==null&&!scanRunning&&scanMsg)msg=scanMsg;
+  if(msg!=null){$('tsProg').textContent=msg;return;}
+  if(scanRunning){
+    const s=PLAN[Math.min(scan.seg,PLAN.length-1)];
+    const left=Math.round((PLAN_TOTAL-done)*msPerDid/60000);
+    $('tsProg').textContent=segName(s)+' · mã '+didStr(Math.min(scan.next,s.to))+' · đã hỏi '+fmt(scan.asked)+' mã · có dữ liệu '+fmt(scan.nHits)+' · còn khoảng '+fmt(Math.max(1,left))+' phút';
+  }else if(hasProgress){
+    $('tsProg').textContent='Đã hỏi '+fmt(scan.asked)+' mã ('+fmt(100*done/PLAN_TOTAL)+'%), có dữ liệu '+fmt(scan.nHits)+'.'+(strong?' Bấm Sao chép kết quả rồi gửi cho Claude.':'');
+  }else{
+    $('tsProg').textContent=connected?'':'Kết nối vLinker để bắt đầu.';
+  }
+}
+async function detectPair(ecu){
+  for(const did of [0xF186,0xF190,0xF18C,0xF150]){
+    const r=await readDid(ecu,did);
+    if(r.ok){
+      const p=await uds(ecu,[0x22,did>>8,did&255,0x00,0x01]);
+      return !!(p&&p[0]===0x62&&p[1]===(did>>8)&&p[2]===(did&255));
+    }
+  }
+  return false;
+}
+async function scanStep(ecu,d,step){
+  if(step===2){
+    const r=await uds(ecu,[0x22,d>>8,d&255,(d+1)>>8,(d+1)&255]);
+    if(!r)return[{did:d,none:true},{did:d+1,none:true}];
+    if(r[0]===0x7F&&r[2]===0x31)return[{did:d,nrc:0x31},{did:d+1,nrc:0x31}];
+    if(r[0]===0x7F&&r[2]===0x13)scan.pair[ecu]=false;
+  }
+  const out=[];
+  for(let i=0;i<step;i++){
+    const did=d+i,r=await readDid(ecu,did);
+    out.push(r.ok?{did,data:r.data}:r.none?{did,none:true}:{did,nrc:r.nrc==null?-1:r.nrc});
+  }
+  return out;
+}
+async function runTireScan(fresh){
+  scanMsg=null;
+  await runLab(async()=>{
+    if(fresh){scan=freshScan();scan.started=stamp();scan.device=dev&&dev.name||'';saveScan();renderCands();}
+    scanRunning=true;updateScanUI();
+    log('— Tìm mã áp suất lốp'+(fresh?'':', tiếp tục')+' · số iDrive: '+WHEELS.map(k=>settings.ref[k].bar+' bar '+settings.ref[k].c+'°C').join(', ')+' —');
+    let checkedSeg=-1,strongSeg=-1,silent=0,segHits=0,lastUi=0,paused='';
+    while(scan.seg<PLAN.length&&!stopFlag&&txChar){
+      const s=PLAN[scan.seg];
+      if(scan.next<s.from)scan.next=s.from;
+      if(scan.next>s.to){
+        log('Xong '+segName(s)+': '+fmt(segHits)+' mã có dữ liệu.');
+        const wasStrong=strongSeg===scan.seg;
+        scan.seg++;segHits=0;
+        if(scan.seg<PLAN.length)scan.next=PLAN[scan.seg].from;
+        saveScan();
+        if(wasStrong&&scan.seg<PLAN.length){paused='Đã thấy dữ liệu khớp số lốp và tạm dừng. Bấm Sao chép kết quả rồi gửi cho Claude. Muốn dò tiếp thì bấm Tiếp tục.';break;}
+        continue;
+      }
+      if(checkedSeg!==scan.seg){
+        const ping=await uds(s.ecu,[0x3E,0x00]);
+        if(!ping){log('Hộp 0x'+hx(s.ecu)+' không trả lời, bỏ qua '+segName(s)+'.');scan.next=s.to+1;continue;}
+        if(scan.pair[s.ecu]==null)scan.pair[s.ecu]=await detectPair(s.ecu);
+        log('Dò '+segName(s)+(scan.pair[s.ecu]?' · hỏi 2 mã một lần':'')+'…');
+        checkedSeg=scan.seg;silent=0;
+      }
+      const step=scan.pair[s.ecu]&&scan.next<s.to?2:1;
+      const t0=performance.now();
+      const res=await scanStep(s.ecu,scan.next,step);
+      for(const r of res){
+        if(r.data){
+          silent=0;scan.nHits++;segHits++;
+          const raw=hexs(r.data);
+          scan.hits.push(hx(s.ecu)+' '+didStr(r.did)+' = '+raw);
+          const c=classify(r.data);
+          if(c){
+            scan.cands.push({e:s.ecu,d:r.did,raw,desc:c.desc,strong:c.strong});
+            if(c.strong)strongSeg=scan.seg;
+            renderCands();
+            log((c.strong?'KHỚP MẠNH':'Có thể khớp')+': hộp 0x'+hx(s.ecu)+' mã '+didStr(r.did)+' = '+raw+' · '+c.desc);
+          }
+        }else if(r.none){silent++;}
+        else{silent=0;if(r.nrc!==0x31)scan.hits.push(hx(s.ecu)+' '+didStr(r.did)+' ! '+(r.nrc<0?'??':hx(r.nrc)));}
+      }
+      scan.asked+=step;scan.next+=step;
+      msPerDid=msPerDid*0.92+((performance.now()-t0)/step)*0.08;
+      if(silent>=6){
+        const ping=await uds(s.ecu,[0x3E,0x00]);
+        if(!ping){paused='Hộp 0x'+hx(s.ecu)+' ngừng trả lời nên đã tạm dừng. Kiểm tra máy còn nổ, rồi bấm Tiếp tục.';log(paused);break;}
+        silent=0;
+      }
+      if(scan.asked%64<step)saveScan();
+      const now=performance.now();
+      if(now-lastUi>500){updateScanUI();lastUi=now;}
+    }
+    if(scan.seg>=PLAN.length){scan.done=true;log('Đã dò xong toàn bộ.');}
+    saveScan();scanRunning=false;
+    const strong=scan.cands.some(c=>c.strong);
+    if(!txChar&&!scan.done)paused='Mất kết nối khi đang dò. Kết nối lại rồi bấm Tiếp tục.';
+    else if(stopFlag&&!scan.done)paused='Đã dừng. Bấm Tiếp tục để dò tiếp từ chỗ dừng.';
+    else if(scan.done)paused='Đã dò xong. '+(strong?'Có dữ liệu khớp số lốp. ':'Chưa thấy dữ liệu khớp rõ. ')+'Bấm Sao chép kết quả rồi gửi cho Claude.';
+    scanMsg=paused||null;
+  });
+  scanRunning=false;updateScanUI();
+}
+function resultText(){
+  const out=['KẾT QUẢ DÒ MÃ · Đồng hồ phụ F30 '+VERSION,
+    'Bắt đầu: '+(scan.started||'?')+' · thiết bị: '+(scan.device||'?')+' · sao chép lúc '+stamp(),
+    'Số iDrive: '+WHEELS.map(k=>POS[k]+' '+settings.ref[k].bar+' bar '+settings.ref[k].c+'°C').join(' · '),
+    'Hỏi 2 mã một lần: '+Object.keys(scan.pair).map(e=>'0x'+hx(+e)+'='+(scan.pair[e]?'có':'không')).join(', '),
+    'Đã hỏi '+scan.asked+' mã, có dữ liệu '+scan.nHits,
+    'Tiến độ:',progressText(),'',
+    'ỨNG VIÊN ('+scan.cands.length+'):'];
+  for(const c of scan.cands)out.push((c.strong?'[mạnh] ':'[có thể] ')+hx(c.e)+' '+didStr(c.d)+' = '+c.raw+' · '+c.desc);
+  out.push('','DỮ LIỆU ĐỌC ĐƯỢC ('+scan.hits.length+' dòng; "!" là mã bị từ chối kèm lý do):');
+  return out.concat(scan.hits).join('\n');
+}
+function tsFlash(s){const m=$('tsMsg');m.textContent=s;setTimeout(()=>{if(m.textContent===s)m.textContent='';},4000);}
+$('tsStart').addEventListener('click',()=>{
+  if(scan.asked>0&&!confirmReset){confirmReset=setTimeout(()=>{confirmReset=0;updateScanUI($('tsProg').textContent);},4000);updateScanUI($('tsProg').textContent);return;}
+  if(confirmReset){clearTimeout(confirmReset);confirmReset=0;}
+  runTireScan(true);
+});
+$('tsResume').addEventListener('click',()=>runTireScan(false));
+$('tsStop').addEventListener('click',()=>{stopFlag=true;updateScanUI('Đang dừng…');});
+$('tsCopy').addEventListener('click',()=>{
+  if(!scan.asked){tsFlash('Chưa có kết quả để sao chép');return;}
+  const text=resultText();
+  const fallback=()=>{const ta=$('tsOut');ta.value=text;ta.hidden=false;ta.focus();ta.select();tsFlash('Đã bôi đen kết quả, bấm giữ để sao chép');};
+  try{navigator.clipboard.writeText(text).then(()=>tsFlash('Đã sao chép '+fmt(text.length)+' ký tự'),fallback);}catch(e){fallback();}
+});
+$('tsDl').addEventListener('click',()=>{
+  if(!scan.asked){tsFlash('Chưa có kết quả để tải');return;}
+  try{
+    const blob=new Blob([resultText()],{type:'text/plain;charset=utf-8'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download='f30-do-ma-lop-'+stamp().replace(/[: ]/g,'-')+'.txt';
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);
+    tsFlash('Đã tải file vào thư mục Tải xuống');
+  }catch(e){tsFlash('Không tải được file, hãy dùng Sao chép kết quả');}
+});
+
+/* ---------- Dò mã thủ công ---------- */
 const parseHex=s=>{const t=(s||'').replace(/[^0-9a-fA-F]/g,'');if(!t||t.length%2)return null;const a=[];for(let i=0;i<t.length;i+=2)a.push(parseInt(t.slice(i,i+2),16));return a;};
 const parseEcu=s=>{const t=(s||'').trim();return /^[0-9a-fA-F]{1,2}$/.test(t)?parseInt(t,16):null;};
 const parseDid=s=>{const t=(s||'').trim();return /^[0-9a-fA-F]{4}$/.test(t)?parseInt(t,16):null;};
@@ -873,7 +1223,7 @@ async function scanEcus(){
   log('Tìm thấy '+found.length+' hộp: '+(found.map(a=>'0x'+hx(a)).join(', ')||'không có'));
 }
 async function oilTest(){
-  log('— Thử mã nhiệt độ dầu. Ghi lại số trên kim đồng hồ xe để so —');
+  log('— Thử mã nhiệt độ dầu —');
   for(const c of OIL){
     const r=await readCand(c);
     log(c.label+': '+(r.v!=null?fmt(r.v,1)+'°C (thô '+hexs(r.raw)+')':r.nrc!=null?'từ chối, '+(NRC[r.nrc]||'NRC '+hx(r.nrc)):'không trả lời'));
@@ -881,7 +1231,7 @@ async function oilTest(){
 }
 async function readOne(){
   const ecu=parseEcu($('inEcu').value),did=parseDid($('inDid').value);
-  if(ecu==null||did==null){log('Nhập hộp (ví dụ 12) và DID 4 ký tự (ví dụ 4402).');return;}
+  if(ecu==null||did==null){log('Nhập hộp (ví dụ 40) và DID 4 ký tự (ví dụ F190).');return;}
   logDid(ecu,did,await readDid(ecu,did),true);
 }
 async function scanRange(){
@@ -928,11 +1278,11 @@ $('btnRead').addEventListener('click',()=>runLab(readOne));
 $('btnScan').addEventListener('click',()=>runLab(scanRange));
 $('btnRaw').addEventListener('click',()=>runLab(sendRaw));
 $('btnStop').addEventListener('click',()=>{stopFlag=true;prog('Đang dừng…');});
-$('btnClear').addEventListener('click',()=>{logLines.length=0;$('log').textContent='';});
+$('btnClear').addEventListener('click',()=>{logLines.length=0;logPending=[];$('log').textContent='';});
 function flash(s){const m=$('copyMsg');m.textContent=s;setTimeout(()=>{if(m.textContent===s)m.textContent='';},3500);}
 function selectLog(){try{const r=document.createRange();r.selectNodeContents($('log'));const s=getSelection();s.removeAllRanges();s.addRange(r);flash('Đã bôi đen nhật ký, bấm giữ để sao chép');}catch(e){}}
 $('btnCopy').addEventListener('click',()=>{
-  const head='Đồng hồ phụ F30 · '+(dev&&dev.name?dev.name:'vLinker')+' · mã dầu đang dùng: '+(oilSrc?oilSrc.label:'chưa có');
+  const head='Đồng hồ phụ F30 '+VERSION+' · '+(dev&&dev.name?dev.name:'vLinker')+' · mã dầu đang dùng: '+(oilSrc?oilSrc.label:'chưa có');
   const text=head+'\n'+(logLines.join('\n')||'(nhật ký trống)');
   try{navigator.clipboard.writeText(text).then(()=>flash('Đã sao chép nhật ký'),selectLog);}catch(e){selectLog();}
 });
@@ -940,6 +1290,7 @@ $('btnCopy').addEventListener('click',()=>{
 /* ---------- Khởi động ---------- */
 log('Nhật ký kết nối và dò mã sẽ hiện ở đây.');
 render();
+renderCands();
 setLabEnabled();
 (async()=>{
   let ok=false;
