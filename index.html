@@ -377,7 +377,7 @@ img{max-width:100%}
   </section>
 
   <details class="card" id="setCard">
-    <summary><h2>Cài đặt</h2><span class="hint">Ngưỡng cảnh báo, tốc độ đọc</span></summary>
+    <summary><h2>Cài đặt</h2><span class="hint">Ngưỡng cảnh báo, tốc độ đọc, tự ngắt</span></summary>
     <div class="dbody">
       <div class="form2">
         <div class="field"><label for="setTireWarn">Lốp thấp dưới (bar)</label><input type="number" id="setTireWarn" step="0.1" min="0.5" max="4"></div>
@@ -387,6 +387,7 @@ img{max-width:100%}
       </div>
       <p class="muted">Lốp cũng bị báo thấp khi một lốp kém các lốp còn lại hơn 0.3 bar. Áp suất chuẩn in trên tem ở khung cửa tài xế.</p>
       <label class="check" for="setSlow"><input type="checkbox" id="setSlow"><span>Đọc chậm, khoảng 2 giây một lần. Bật nếu nhạc Bluetooth bị rè hoặc ngắt khi trang đang đọc.</span></label>
+      <label class="check" for="setAutoOff"><input type="checkbox" id="setAutoOff"><span>Tự ngắt khi xe tắt máy: ngừng đọc và ngắt vLinker khi xe không còn trả lời quá 30 giây, hoặc máy dừng quá 5 phút. Khi đó vLinker tự chuyển sang chế độ ngủ.</span></label>
     </div>
   </details>
 
@@ -440,8 +441,9 @@ img{max-width:100%}
 
   <footer class="foot">
     <p>Tốc độ trên trang là tốc độ thực đọc từ OBD, thường thấp hơn kim đồng hồ trên xe vài km/h; máy bắn tốc độ cũng đo tốc độ thực. Số chuyển vàng khi còn 3 km/h là chạm giới hạn, chuyển đỏ và bíp khi đã vượt.</p>
-    <p>Bản 2 · 7/11/2026. Nước mát, vòng tua, tốc độ, khí nạp đọc bằng mã OBD chuẩn. Nhiệt độ dầu dùng mã PID 5C, đã đối chiếu ngày 7/11: trang đọc 112°C, mã riêng của BMW cũng ra 112.5°C, kim đồng hồ xe gần vạch 120.</p>
+    <p>Bản 2.1 · 7/11/2026. Nước mát, vòng tua, tốc độ, khí nạp đọc bằng mã OBD chuẩn. Nhiệt độ dầu dùng mã PID 5C, đã đối chiếu ngày 7/11: trang đọc 112°C, mã riêng của BMW cũng ra 112.5°C, kim đồng hồ xe gần vạch 120.</p>
     <p>Mức nước mát, nước rửa kính và mức dầu chưa đọc được từ trang. Đồng hồ xe vẫn tự báo các cảnh báo này như bình thường.</p>
+    <p>Khi xe tắt máy, trang tự ngừng đọc và ngắt vLinker để không giữ các hộp điều khiển của xe thức, có thể tắt trong Cài đặt. Cổng OBD luôn có điện nên trang không cắt điện vLinker được; vLinker tự ngủ khi không còn ai kết nối và tự thức khi nổ máy.</p>
     <p>Đặt điện thoại trên giá, không thao tác khi đang lái.</p>
   </footer>
 </div>
@@ -449,7 +451,7 @@ img{max-width:100%}
 <script>
 (function(){
 'use strict';
-const VERSION='Bản 2';
+const VERSION='Bản 2.1';
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const fmt=(v,d=0)=>(v==null||!isFinite(v))?'--':Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -465,7 +467,7 @@ function stamp(){const t=new Date();return t.getFullYear()+'-'+String(t.getMonth
 const WHEELS=['FL','FR','RL','RR'];
 const SKEY='f30-gauges-v1';
 const DEF_REF={FL:{bar:2.0,c:41},FR:{bar:2.0,c:41},RL:{bar:2.0,c:35},RR:{bar:2.0,c:34}};
-const DEF={tireWarn:2.0,tireCrit:1.6,coolantMax:118,oilMax:130,svcDate:'',svcKm:'',speedLimit:0,beep:true,slow:false,ref:DEF_REF};
+const DEF={tireWarn:2.0,tireCrit:1.6,coolantMax:118,oilMax:130,svcDate:'',svcKm:'',speedLimit:0,beep:true,slow:false,autoOff:true,ref:DEF_REF};
 let settings={...DEF,ref:JSON.parse(JSON.stringify(DEF_REF))};
 try{
   const s=JSON.parse(localStorage.getItem(SKEY)||'{}');
@@ -634,7 +636,7 @@ async function detectOil(){
 
 /* ---------- Kết nối ---------- */
 let polling=false,cycle=0,labBusy=false,stopFlag=false,wake=null;
-let userClosed=false,reconnecting=false,forceChooser=false;
+let userClosed=false,reconnecting=false,forceChooser=false,autoOffFlag=false;
 function setPill(cls,text){const p=$('connPill');p.className='pill '+(cls||'');p.textContent=text;}
 function setLabEnabled(){
   document.querySelectorAll('[data-lab]').forEach(b=>{b.disabled=labBusy||!txChar;});
@@ -677,7 +679,7 @@ async function startSession(){
 }
 async function connect(){
   if(!navigator.bluetooth){$('btNotice').hidden=false;$('btNotice').scrollIntoView({behavior:'smooth',block:'center'});return;}
-  userClosed=false;
+  userClosed=false;autoOffFlag=false;
   setPill('busy','Đang tìm thiết bị…');
   try{
     if(!forceChooser&&navigator.bluetooth.getDevices){
@@ -718,7 +720,12 @@ function onDisconnect(){
   $('btnConnect').textContent='Kết nối';
   setLabEnabled();
   live.speed=null;render();
-  if(userClosed){setPill('','Đã ngắt');log('Đã ngắt kết nối.');try{wake&&wake.release();}catch(e){}return;}
+  if(userClosed){
+    setPill('',autoOffFlag?'Đã ngắt vì xe tắt máy':'Đã ngắt');
+    log(autoOffFlag?'Đã ngắt vLinker. Lần sau nổ máy thì bấm Kết nối.':'Đã ngắt kết nối.');
+    try{wake&&wake.release();wake=null;}catch(e){}
+    return;
+  }
   if(reconnecting)return;
   setPill('crit','Mất kết nối');
   log('Thiết bị đã ngắt kết nối. Đang thử kết nối lại…');
@@ -754,11 +761,20 @@ $('btnConnect').addEventListener('click',()=>{
 
 /* Tốc độ đọc mỗi vòng để số trên màn hình bám sát xe; các thông số khác luân phiên, vòng tua xen giữa */
 const SLOTS=['coolant','rpm','oil','rpm','intake','rpm','volt','rpm'];
+/* Tự ngắt khi xe tắt máy: không còn trả lời 30 giây (đã tắt khóa điện), hoặc vòng tua 0 và xe đứng yên 5 phút.
+   5 phút để không ngắt nhầm khi Auto Start-Stop tạm tắt máy lúc dừng đèn đỏ. */
+function autoOff(msg){
+  log(msg);
+  autoOffFlag=true;userClosed=true;polling=false;
+  live.rpm=null;live.speed=null;render();
+  try{wake&&wake.release();wake=null;}catch(e){}
+  try{if(dev&&dev.gatt.connected)dev.gatt.disconnect();}catch(e){}
+}
 async function pollLoop(){
   if(polling)return;polling=true;
-  let speedMiss=0;
+  let speedMiss=0,lastAlive=Date.now(),lastRun=Date.now();
   while(polling&&txChar){
-    if(labBusy){await sleep(300);continue;}
+    if(labBusy){lastAlive=lastRun=Date.now();await sleep(300);continue;}
     try{
       const s=await obd(1,0x0D);
       if(s&&s.length){live.speed=s[0];speedMiss=0;}else if(++speedMiss>=3)live.speed=null;
@@ -768,7 +784,14 @@ async function pollLoop(){
       else if(slot==='oil'){if(oilSrc){const o=await readCand(oilSrc);if(plausible(o.v))live.oil=o.v;}}
       else if(slot==='intake'){const i=await obd(1,0x0F);if(i)live.intake=i[0]-40;}
       else if(slot==='volt'){const v=await locked(()=>send('ATRV'));const m=/(\d+(?:\.\d+)?)\s*V/i.exec(v);if(m)live.volt=parseFloat(m[1]);}
+      const now=Date.now();
+      if(s&&s.length)lastAlive=now;
+      if((live.rpm!=null&&live.rpm>300)||(live.speed!=null&&live.speed>0))lastRun=now;
       cycle++;render();
+      if(settings.autoOff!==false&&!labBusy){
+        if(now-lastAlive>30000){autoOff('Xe không còn trả lời quá 30 giây, có lẽ đã tắt máy. Trang ngừng đọc và ngắt vLinker.');break;}
+        if(now-lastRun>300000){autoOff('Máy dừng và xe đứng yên quá 5 phút. Trang ngừng đọc và ngắt vLinker.');break;}
+      }
       if(settings.slow)await sleep(2000);
     }catch(e){log('Lỗi đọc: '+e.message);await sleep(800);}
   }
@@ -963,6 +986,8 @@ function bindNum(id,key){
 bindNum('setTireWarn','tireWarn');bindNum('setTireCrit','tireCrit');bindNum('setCoolant','coolantMax');bindNum('setOil','oilMax');
 $('setSlow').checked=!!settings.slow;
 $('setSlow').addEventListener('change',e=>{settings.slow=e.target.checked;saveSettings();});
+$('setAutoOff').checked=settings.autoOff!==false;
+$('setAutoOff').addEventListener('change',e=>{settings.autoOff=e.target.checked;saveSettings();});
 $('svcDate').value=settings.svcDate;$('svcKm').value=settings.svcKm;
 $('svcDate').addEventListener('change',e=>{settings.svcDate=e.target.value;saveSettings();render();});
 $('svcKm').addEventListener('change',e=>{settings.svcKm=e.target.value===''?'':String(Math.max(0,Math.round(+e.target.value)));saveSettings();render();});
