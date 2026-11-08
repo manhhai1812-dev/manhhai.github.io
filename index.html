@@ -463,7 +463,7 @@ img{max-width:100%}
 
   <footer class="foot">
     <p>Tốc độ trên trang là tốc độ thực đọc từ OBD, thường thấp hơn kim đồng hồ trên xe vài km/h; máy bắn tốc độ cũng đo tốc độ thực. Số chuyển vàng khi còn 3 km/h là chạm giới hạn, chuyển đỏ và bíp khi đã vượt.</p>
-    <p>Bản 3.3 · 8/11/2026. Nước mát, vòng tua, tốc độ, khí nạp đọc bằng mã OBD chuẩn. Nhiệt độ dầu dùng mã PID 5C, đã đối chiếu ngày 7/11: trang đọc 112°C, mã riêng của BMW cũng ra 112.5°C, kim đồng hồ xe gần vạch 120.</p>
+    <p>Bản 3.4 · 8/11/2026. Nước mát, vòng tua, tốc độ, khí nạp đọc bằng mã OBD chuẩn. Nhiệt độ dầu dùng mã PID 5C, đã đối chiếu ngày 7/11: trang đọc 112°C, mã riêng của BMW cũng ra 112.5°C, kim đồng hồ xe gần vạch 120.</p>
     <p>Cảnh báo thiếu nước làm mát, nước rửa kính, dầu máy và lỗi lốp lấy từ lịch sử thông báo của xe, nên chỉ hiện sau khi xe đã báo trên đồng hồ. Số áp suất lốp chưa đọc được; trong lúc xe chạy, trang thử đọc thêm một số mã và ghi vào nhật ký.</p>
     <p>Khi xe tắt máy, trang tự ngừng đọc và ngắt vLinker để không giữ các hộp điều khiển của xe thức, có thể tắt trong Cài đặt. Cổng OBD luôn có điện nên trang không cắt điện vLinker được; vLinker tự ngủ khi không còn ai kết nối và tự thức khi nổ máy.</p>
     <p>Đặt điện thoại trên giá, không thao tác khi đang lái.</p>
@@ -473,7 +473,7 @@ img{max-width:100%}
 <script>
 (function(){
 'use strict';
-const VERSION='Bản 3.3';
+const VERSION='Bản 3.4';
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const fmt=(v,d=0)=>(v==null||!isFinite(v))?'--':Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -826,7 +826,8 @@ const PROBE=[[0x40,0xD073],[0x40,0xD074],[0x40,0xD08B],[0x40,0xD347],[0x40,0xD36
 /* Đợt 2 (8/11): hộp 0x44 có khối mã D630–D63E nghi là dữ liệu 4 bánh. Theo dõi khi xe chạy để xem số nào đổi theo iDrive. */
 const WATCH=[[0x44,0xD630],[0x44,0xD631],[0x44,0xD632],[0x44,0xD634],[0x44,0xD635],[0x44,0xD636],[0x44,0xD637],[0x44,0xD638],[0x44,0xD639],[0x44,0xD63A],[0x44,0xD63B],[0x44,0xD63C],[0x44,0xD63D],[0x44,0xD63E],
   [0x44,0xD506],[0x44,0xD529],[0x44,0xD1FD],[0x29,0xDBE4],[0x29,0xDBE5],[0x29,0xDBE7]];
-const PROBE_ALL=WATCH.map(x=>[x[0],x[1],1]).concat(PROBE.map(x=>[x[0],x[1],0]));
+/* 8/11 15:06: khối D630 tăng đều khi đỗ trong lúc nhiệt độ lốp trên iDrive đứng yên, nên không phải dữ liệu lốp; ngừng theo dõi. */
+const PROBE_ALL=PROBE.map(x=>[x[0],x[1],0]);
 let probeIdx=0;const probeSeen={},probeAt={};
 async function probeStep(){
   const [e,did,watch]=PROBE_ALL[probeIdx++%PROBE_ALL.length];
