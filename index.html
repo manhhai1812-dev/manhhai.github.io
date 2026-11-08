@@ -366,6 +366,18 @@ img{max-width:100%}
     </details>
   </section>
 
+  <section class="card" id="faultCard" aria-labelledby="faultTitle">
+    <div class="card-head"><h2 id="faultTitle">Lỗi các hộp điều khiển</h2><span class="hint" id="faultHint">Chưa quét</span></div>
+    <ul class="hist" id="faultList"></ul>
+    <div class="row" style="margin-top:8px">
+      <button class="btn small" id="btnFaultScan" type="button" data-lab disabled>Quét lỗi</button>
+      <button class="btn small" id="btnFaultAck" type="button" hidden>Đã xem lỗi mới</button>
+      <button class="btn small" id="btnFaultCopy" type="button">Sao chép mã lỗi</button>
+      <span class="copymsg" id="faultMsg" aria-live="polite"></span>
+    </div>
+    <p class="muted" style="margin-top:8px">Trang tự quét một lần mỗi khi kết nối lúc xe đứng yên. Chỉ đọc, không xóa lỗi. BMW không công khai nghĩa mã lỗi, nên trang hiện mã thô: gửi mã cho Claude để tra, hoặc đưa gara đọc bằng máy chẩn đoán của hãng.</p>
+  </section>
+
   <section class="card ts" id="tsCard" aria-labelledby="tsTitle" hidden>
     <div class="card-head" style="margin-bottom:0"><h2 id="tsTitle">Tìm mã áp suất lốp</h2><span class="hint" id="tsState">Chưa chạy</span></div>
     <p class="muted">Chạy xe đến khi iDrive hiện số 4 lốp, đỗ lại và để máy nổ. Sửa các ô dưới đây cho khớp số đang hiện trong iDrive, rồi bấm <b>Bắt đầu tìm</b>. Đợt 2 hỏi hộp phanh, cân bằng DSC trước, rồi 7 hộp chưa rõ tên, tổng cộng khoảng 40–45 phút. Có thể chia làm nhiều lần: dừng giữa chừng hoặc mất kết nối thì lần sau bấm <b>Tiếp tục</b>, không mất phần đã dò.</p>
@@ -468,7 +480,7 @@ img{max-width:100%}
 
   <footer class="foot">
     <p>Tốc độ trên trang là tốc độ thực đọc từ OBD, thường thấp hơn kim đồng hồ trên xe vài km/h; máy bắn tốc độ cũng đo tốc độ thực. Số chuyển vàng khi còn 3 km/h là chạm giới hạn, chuyển đỏ và bíp khi đã vượt.</p>
-    <p>Bản 5 · 8/11/2026. Nước mát, vòng tua, tốc độ, khí nạp đọc bằng mã OBD chuẩn. Nhiệt độ dầu dùng mã PID 5C, đã đối chiếu ngày 7/11: trang đọc 112°C, mã riêng của BMW cũng ra 112.5°C, kim đồng hồ xe gần vạch 120.</p>
+    <p>Bản 5.1 · 8/11/2026. Nước mát, vòng tua, tốc độ, khí nạp đọc bằng mã OBD chuẩn. Nhiệt độ dầu dùng mã PID 5C, đã đối chiếu ngày 7/11: trang đọc 112°C, mã riêng của BMW cũng ra 112.5°C, kim đồng hồ xe gần vạch 120.</p>
     <p>Cảnh báo thiếu nước làm mát, nước rửa kính, dầu máy và lỗi lốp lấy từ lịch sử thông báo của xe, nên chỉ hiện sau khi xe đã báo trên đồng hồ. Áp suất và nhiệt độ 4 lốp đọc từ hộp DSC, nơi chứa chức năng theo dõi áp suất lốp trên F30; đã đối chiếu với iDrive ngày 8/11. Số chỉ cập nhật khi xe chạy, giống iDrive.</p>
     <p>Khi xe tắt máy, trang tự ngừng đọc và ngắt vLinker để không giữ các hộp điều khiển của xe thức, có thể tắt trong Cài đặt. Cổng OBD luôn có điện nên trang không cắt điện vLinker được; vLinker tự ngủ khi không còn ai kết nối và tự thức khi nổ máy.</p>
     <p>Bản 5 thêm: đèn check engine và mã lỗi động cơ (mã OBD chuẩn), ắc quy và máy phát, nhắc máy còn nguội, lốp nóng bất thường, lốp xì chậm (cần vài ngày dữ liệu), thông báo mới của xe trong chuyến, mức xăng nếu xe trả lời. Tên thông báo theo danh sách CC-ID công khai, có thể chưa đúng hết với F30.</p>
@@ -479,7 +491,7 @@ img{max-width:100%}
 <script>
 (function(){
 'use strict';
-const VERSION='Bản 5';
+const VERSION='Bản 5.1';
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const fmt=(v,d=0)=>(v==null||!isFinite(v))?'--':Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -724,6 +736,7 @@ async function openGatt(d){
 }
 function attach(d){if(d.__f30)return;d.__f30=true;d.addEventListener('gattserverdisconnected',onDisconnect);}
 async function startSession(){
+  sessionStart=Date.now();faultScanned=false;
   await locked(initElm);
   if(mode!=='live'){mode='live';live=emptyLive();}
   $('subLine').textContent='BMW 320i · '+(dev&&dev.name||'vLinker')+' · đọc qua cổng OBD';
@@ -965,6 +978,60 @@ function slowLeak(){
   return out;
 }
 let vLowSince=0,vCritSince=0;
+/* Lỗi các hộp điều khiển: UDS 19 02 (đọc lỗi theo trạng thái), mỗi lỗi 4 byte = mã 3 byte (giống mã trong ISTA) + 1 byte trạng thái ISO 14229.
+   Chỉ đọc. Danh sách 18 hộp tìm thấy trên xe ngày 7/11. */
+const FAULT_ECUS=[0x12,0x18,0x29,0x30,0x40,0x60,0x63,0x01,0x10,0x1C,0x5E,0x72,0x78,0x67,0x6D,0x43,0x44,0x06];
+const FAULT_KEY='f30-faults-v1';
+let faults=null,faultKnown=null,faultScanned=false,sessionStart=0;
+try{const f=JSON.parse(localStorage.getItem(FAULT_KEY)||'null');if(f){faults=f.last||null;faultKnown=f.known||null;}}catch(e){}
+function saveFaults(){try{localStorage.setItem(FAULT_KEY,JSON.stringify({last:faults,known:faultKnown}));}catch(e){}}
+const ecuName=a=>ECU_NAMES[a]||('Hộp 0x'+hx(a));
+const hex6=c=>c.toString(16).toUpperCase().padStart(6,'0');
+function faultState(st){return st&1?'đang có':st&8?'đã xác nhận':st&4?'chờ xác nhận':'đã qua';}
+async function readEcuFaults(ecu){
+  const r=await uds(ecu,[0x19,0x02,0x0D]);
+  if(!r)return{none:true};
+  if(r[0]===0x7F)return{nrc:r[2]};
+  if(r[0]!==0x59||r[1]!==0x02)return{bad:true};
+  const recs=[];
+  for(let i=3;i+3<r.length;i+=4)recs.push({c:(r[i]<<16)|(r[i+1]<<8)|r[i+2],s:r[i+3]});
+  return{recs};
+}
+async function scanFaults(){
+  const res={time:stamp(),ecus:{}};
+  log('— Quét lỗi các hộp điều khiển —');
+  for(const a of FAULT_ECUS){
+    if(!txChar)break;
+    const r=await readEcuFaults(a);
+    if(r.recs){res.ecus[a]=r.recs;if(r.recs.length)log(ecuName(a)+': '+r.recs.map(x=>hex6(x.c)+' ('+faultState(x.s)+')').join(', '));}
+    else if(r.nrc!=null)res.ecus[a]={nrc:r.nrc};
+  }
+  const total=Object.values(res.ecus).reduce((n,v)=>n+(Array.isArray(v)?v.length:0),0);
+  log('Quét lỗi xong: '+total+' lỗi ở '+Object.values(res.ecus).filter(v=>Array.isArray(v)&&v.length).length+' hộp.');
+  faults=res;
+  if(!faultKnown){faultKnown=faultKeys(res);log('Lần quét đầu tiên: các lỗi hiện có được ghi nhận là lỗi cũ.');}
+  saveFaults();render();
+}
+function faultKeys(res){const k=[];for(const [a,v] of Object.entries(res.ecus))if(Array.isArray(v))for(const x of v)k.push(a+':'+x.c);return k;}
+function newFaults(){
+  if(!faults||!faultKnown)return[];
+  const known=new Set(faultKnown),out=[];
+  for(const [a,v] of Object.entries(faults.ecus))if(Array.isArray(v))for(const x of v)if(!known.has(a+':'+x.c))out.push({a:+a,c:x.c,s:x.s});
+  return out;
+}
+function renderFaults(){
+  const ul=$('faultList'),nf=newFaults(),nset=new Set(nf.map(x=>x.a+':'+x.c));
+  if(!faults){ul.innerHTML='<li><span class="muted">Chưa quét. Kết nối khi xe đứng yên, trang sẽ tự quét.</span></li>';$('faultHint').textContent='Chưa quét';$('btnFaultAck').hidden=true;return;}
+  const rows=[];
+  for(const a of FAULT_ECUS){
+    const v=faults.ecus[a];if(!Array.isArray(v)||!v.length)continue;
+    const isNew=v.some(x=>nset.has(a+':'+x.c));
+    rows.push('<li class="'+(isNew?'warn':'')+'"><span class="nm">'+ecuName(a)+' · '+v.length+' lỗi'+(isNew?' · có lỗi mới':'')+'</span><span class="km">'+v.map(x=>hex6(x.c)+' '+faultState(x.s)).join(', ')+'</span></li>');
+  }
+  ul.innerHTML=rows.length?rows.join(''):'<li><span class="muted">Không hộp nào có lỗi.</span></li>';
+  $('faultHint').textContent='Quét lúc '+faults.time.slice(11)+' '+faults.time.slice(8,10)+'/'+faults.time.slice(5,7);
+  $('btnFaultAck').hidden=!nf.length;
+}
 function autoOff(msg){
   log(msg);
   autoOffFlag=true;userClosed=true;polling=false;
@@ -1000,6 +1067,7 @@ async function pollLoop(){
       if(Date.now()-tireLast>8000)await readTires();
       if(Date.now()-engLast>120000)await readEngineFaults();
       if(fuelOK!==false&&Date.now()-fuelLast>30000)await readFuel();
+      if(!faultScanned&&Date.now()-sessionStart>20000&&live.speed===0){faultScanned=true;await scanFaults();}
       const now=Date.now();
       if(s&&s.length)lastAlive=now;
       if((live.rpm!=null&&live.rpm>300)||(live.speed!=null&&live.speed>0))lastRun=now;
@@ -1154,6 +1222,11 @@ function warnings(d){
       else items.push({name:'Thông báo mới',s:worst(tr.map(e=>CC_INFO[e.id]&&CC_INFO[e.id][2]||'info')),det:'Xe vừa báo: '+tr.map(e=>ccName(e.id)).join(', ')});
     }
   }
+  if(mode==='live'&&faults){
+    const nf=newFaults();
+    if(nf.length)items.push({name:'Lỗi hộp điều khiển',s:nf.some(x=>x.s&1)?'warn':'info',det:'Lỗi mới: '+nf.map(x=>ecuName(x.a).split(' (')[0]+' '+hex6(x.c)).join(', ')});
+    else items.push({name:'Lỗi hộp điều khiển',s:'ok',det:'Không có lỗi mới'});
+  }
   if(d.fuel!=null&&d.fuel<10)items.push({name:'Xăng',s:'warn',det:'Sắp hết xăng, còn '+fmt(d.fuel)+'%'});
   return items;
 }
@@ -1188,6 +1261,7 @@ function render(){
   }
   $('tireHint').textContent=mode==='demo'?'Dữ liệu mẫu':WHEELS.some(k=>d.tires[k])?'Từ hộp DSC · iDrive chỉ hiện 1 số lẻ':'Đang đọc từ hộp DSC…';
   renderHist(d);
+  renderFaults();
   const items=warnings(d);
   $('ccList').innerHTML=items.map(i=>'<li class="s-'+i.s+'"><span class="dot"></span><div><div class="name">'+i.name+'</div><div class="det">'+i.det+'</div></div><span class="chip">'+CHIP[i.s]+'</span></li>').join('');
   const nc=items.filter(i=>i.s==='crit').length,nw=items.filter(i=>i.s==='warn').length;
@@ -1618,6 +1692,18 @@ function copyLogTo(msgId){
 $('btnCopy').addEventListener('click',()=>copyLogTo('copyMsg'));
 $('btnCopy2').addEventListener('click',()=>copyLogTo('copyMsg2'));
 $('btnCcSnap').addEventListener('click',()=>runLab(ccSnap));
+$('btnFaultScan').addEventListener('click',()=>runLab(scanFaults));
+$('btnFaultAck').addEventListener('click',()=>{if(faults){faultKnown=faultKeys(faults);saveFaults();render();}});
+$('btnFaultCopy').addEventListener('click',()=>{
+  const m=$('faultMsg'),say=t=>{m.textContent=t;setTimeout(()=>{if(m.textContent===t)m.textContent='';},3500);};
+  if(!faults){say('Chưa có kết quả quét');return;}
+  const nset=new Set(newFaults().map(x=>x.a+':'+x.c));
+  const lines=['Lỗi các hộp điều khiển · BMW 320i F30 B48 2016 · quét lúc '+faults.time];
+  for(const a of FAULT_ECUS){const v=faults.ecus[a];if(Array.isArray(v)&&v.length)lines.push(ecuName(a)+' (0x'+hx(a)+'): '+v.map(x=>hex6(x.c)+' '+faultState(x.s)+' [trạng thái '+hx(x.s)+']'+(nset.has(a+':'+x.c)?' MỚI':'')).join(', '));}
+  if(lines.length===1)lines.push('Không hộp nào có lỗi.');
+  const text=lines.join('\n');
+  try{navigator.clipboard.writeText(text).then(()=>say('Đã sao chép mã lỗi'),()=>say('Không sao chép được'));}catch(e){say('Không sao chép được');}
+});
 $('btnShowTs').addEventListener('click',()=>{const c=$('tsCard');c.hidden=!c.hidden;if(!c.hidden)c.scrollIntoView({behavior:'smooth',block:'start'});});
 
 /* ---------- Khởi động ---------- */
