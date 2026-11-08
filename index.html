@@ -463,7 +463,7 @@ img{max-width:100%}
 
   <footer class="foot">
     <p>Tốc độ trên trang là tốc độ thực đọc từ OBD, thường thấp hơn kim đồng hồ trên xe vài km/h; máy bắn tốc độ cũng đo tốc độ thực. Số chuyển vàng khi còn 3 km/h là chạm giới hạn, chuyển đỏ và bíp khi đã vượt.</p>
-    <p>Bản 3.1 · 7/11/2026. Nước mát, vòng tua, tốc độ, khí nạp đọc bằng mã OBD chuẩn. Nhiệt độ dầu dùng mã PID 5C, đã đối chiếu ngày 7/11: trang đọc 112°C, mã riêng của BMW cũng ra 112.5°C, kim đồng hồ xe gần vạch 120.</p>
+    <p>Bản 3.2 · 8/11/2026. Nước mát, vòng tua, tốc độ, khí nạp đọc bằng mã OBD chuẩn. Nhiệt độ dầu dùng mã PID 5C, đã đối chiếu ngày 7/11: trang đọc 112°C, mã riêng của BMW cũng ra 112.5°C, kim đồng hồ xe gần vạch 120.</p>
     <p>Cảnh báo thiếu nước làm mát, nước rửa kính, dầu máy và lỗi lốp lấy từ lịch sử thông báo của xe, nên chỉ hiện sau khi xe đã báo trên đồng hồ. Số áp suất lốp chưa đọc được; trong lúc xe chạy, trang thử đọc thêm một số mã và ghi vào nhật ký.</p>
     <p>Khi xe tắt máy, trang tự ngừng đọc và ngắt vLinker để không giữ các hộp điều khiển của xe thức, có thể tắt trong Cài đặt. Cổng OBD luôn có điện nên trang không cắt điện vLinker được; vLinker tự ngủ khi không còn ai kết nối và tự thức khi nổ máy.</p>
     <p>Đặt điện thoại trên giá, không thao tác khi đang lái.</p>
@@ -473,7 +473,7 @@ img{max-width:100%}
 <script>
 (function(){
 'use strict';
-const VERSION='Bản 3.1';
+const VERSION='Bản 3.2';
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const fmt=(v,d=0)=>(v==null||!isFinite(v))?'--':Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -818,11 +818,20 @@ async function readCC(){
 /* Các mã trả lời "chưa đủ điều kiện" hoặc "đang bận" khi đỗ xe ngày 7/11; thử lại khi xe chạy để tìm số áp suất lốp */
 const PROBE=[[0x40,0xD073],[0x40,0xD074],[0x40,0xD08B],[0x40,0xD347],[0x40,0xD369],[0x40,0xD36A],[0x40,0xD389],[0x40,0xD399],[0x40,0xD39A],[0x40,0xD39B],[0x40,0xD3BE],[0x40,0xDA0D],[0x40,0xDBEA],[0x40,0xDBEB],[0x40,0xDC83],[0x40,0xDC84],[0x40,0xDC85],[0x40,0x4910],
   [0x60,0xD116],[0x60,0xD118],[0x60,0xD388],[0x60,0xD391],[0x60,0xDA0A],[0x60,0xDA43],[0x60,0xDA44],[0x60,0xDA46]];
-let probeIdx=0;const probeSeen={};
+/* Đợt 2 (8/11): hộp 0x44 có khối mã D630–D63E nghi là dữ liệu 4 bánh. Theo dõi khi xe chạy để xem số nào đổi theo iDrive. */
+const WATCH=[[0x44,0xD630],[0x44,0xD631],[0x44,0xD632],[0x44,0xD634],[0x44,0xD635],[0x44,0xD636],[0x44,0xD637],[0x44,0xD638],[0x44,0xD639],[0x44,0xD63A],[0x44,0xD63B],[0x44,0xD63C],[0x44,0xD63D],[0x44,0xD63E],
+  [0x44,0xD506],[0x44,0xD529],[0x44,0xD1FD],[0x29,0xDBE4],[0x29,0xDBE5],[0x29,0xDBE7]];
+const PROBE_ALL=WATCH.map(x=>[x[0],x[1],1]).concat(PROBE.map(x=>[x[0],x[1],0]));
+let probeIdx=0;const probeSeen={},probeAt={};
 async function probeStep(){
-  const [e,did]=PROBE[probeIdx++%PROBE.length];
+  const [e,did,watch]=PROBE_ALL[probeIdx++%PROBE_ALL.length];
   const r=await readDid(e,did);
-  if(r.ok){const k=hx(e)+' '+didStr(did),v=hexs(r.data);if(probeSeen[k]!==v){probeSeen[k]=v;log('Đọc được lúc xe chạy '+fmt(live.speed)+' km/h: '+k+' = '+v);}}
+  if(!r.ok)return;
+  const k=hx(e)+' '+didStr(did),v=hexs(r.data),now=Date.now();
+  if(probeSeen[k]===v)return;
+  if(watch&&probeSeen[k]!=null&&now-(probeAt[k]||0)<90000)return;
+  probeSeen[k]=v;probeAt[k]=now;
+  log((watch?'Theo dõi':'Đọc được')+' lúc xe '+fmt(live.speed)+' km/h: '+k+' = '+v);
 }
 const SNAP=[0xD106,0xD107,0xD10A,0xD10B,0xD10D,0xD10E,0xD111,0xD112,0xD114,0xD11F,0xD121,0xD122,0xD125,0xD12C,0xD12D,0xD12F];
 let snapN=0;
@@ -852,7 +861,7 @@ async function pollLoop(){
       else if(slot==='oil'){if(oilSrc){const o=await readCand(oilSrc);if(plausible(o.v))live.oil=o.v;}}
       else if(slot==='intake'){const i=await obd(1,0x0F);if(i)live.intake=i[0]-40;}
       else if(slot==='volt'){const v=await locked(()=>send('ATRV'));const m=/(\d+(?:\.\d+)?)\s*V/i.exec(v);if(m)live.volt=parseFloat(m[1]);}
-      if(cycle%6===3)await probeStep();
+      if(cycle%3===1)await probeStep();
       if(Date.now()-ccLast>60000)await readCC();
       const now=Date.now();
       if(s&&s.length)lastAlive=now;
