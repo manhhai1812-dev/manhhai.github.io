@@ -96,6 +96,7 @@ label{font-size:12.5px;color:var(--muted)}
 .s-warn .dot{background:var(--warn)}.s-warn .chip{background:var(--warn-bg);color:var(--warn)}.s-warn .det{color:var(--text)}
 .s-crit .dot{background:var(--crit)}.s-crit .chip{background:var(--crit-bg);color:var(--crit)}.s-crit .det{color:var(--text)}
 .s-part .dot{background:var(--ok);opacity:.55}
+.s-info .dot{background:var(--amber)}.s-info .chip{background:var(--amber-soft);color:var(--amber)}
 
 /* gauges */
 .gauges{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -137,11 +138,13 @@ label{font-size:12.5px;color:var(--muted)}
 .warnbar .more{color:var(--muted);font-size:12.5px;flex:none}
 .warnbar.s-ok .dot{background:var(--ok)}
 .warnbar.s-part .dot{background:var(--ok);opacity:.55}
+.warnbar.s-info .dot{background:var(--amber)}
 .warnbar.s-warn{border-color:var(--warn)}.warnbar.s-warn .dot{background:var(--warn)}
 .warnbar.s-crit{border-color:var(--crit);background:var(--crit-bg)}.warnbar.s-crit .dot{background:var(--crit)}
 
 /* stats */
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 12px}
+.stats.has-fuel{grid-template-columns:repeat(4,minmax(0,1fr))}
 .stat{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:4px;min-width:0}
 .stat .k{flex-basis:100%;font-size:12px;color:var(--muted)}
 .stat .v{font-family:var(--f-num);font-size:28px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
@@ -317,10 +320,11 @@ img{max-width:100%}
       </div>
     </section>
 
-    <section class="card stats" aria-label="Thông số động cơ">
+    <section class="card stats" id="statsCard" aria-label="Thông số động cơ">
       <div class="stat"><span class="k">Vòng tua</span><span class="v" id="vRpm">--</span><span class="u">rpm</span></div>
       <div class="stat"><span class="k">Khí nạp</span><span class="v" id="vIntake">--</span><span class="u">°C</span></div>
       <div class="stat"><span class="k">Ắc quy</span><span class="v" id="vVolt">--</span><span class="u">V</span></div>
+      <div class="stat" id="statFuel" hidden><span class="k">Xăng</span><span class="v" id="vFuel">--</span><span class="u">%</span></div>
     </section>
 
     <section class="card tirecard" aria-labelledby="tireTitle">
@@ -464,9 +468,10 @@ img{max-width:100%}
 
   <footer class="foot">
     <p>Tốc độ trên trang là tốc độ thực đọc từ OBD, thường thấp hơn kim đồng hồ trên xe vài km/h; máy bắn tốc độ cũng đo tốc độ thực. Số chuyển vàng khi còn 3 km/h là chạm giới hạn, chuyển đỏ và bíp khi đã vượt.</p>
-    <p>Bản 4 · 8/11/2026. Nước mát, vòng tua, tốc độ, khí nạp đọc bằng mã OBD chuẩn. Nhiệt độ dầu dùng mã PID 5C, đã đối chiếu ngày 7/11: trang đọc 112°C, mã riêng của BMW cũng ra 112.5°C, kim đồng hồ xe gần vạch 120.</p>
+    <p>Bản 5 · 8/11/2026. Nước mát, vòng tua, tốc độ, khí nạp đọc bằng mã OBD chuẩn. Nhiệt độ dầu dùng mã PID 5C, đã đối chiếu ngày 7/11: trang đọc 112°C, mã riêng của BMW cũng ra 112.5°C, kim đồng hồ xe gần vạch 120.</p>
     <p>Cảnh báo thiếu nước làm mát, nước rửa kính, dầu máy và lỗi lốp lấy từ lịch sử thông báo của xe, nên chỉ hiện sau khi xe đã báo trên đồng hồ. Áp suất và nhiệt độ 4 lốp đọc từ hộp DSC, nơi chứa chức năng theo dõi áp suất lốp trên F30; đã đối chiếu với iDrive ngày 8/11. Số chỉ cập nhật khi xe chạy, giống iDrive.</p>
     <p>Khi xe tắt máy, trang tự ngừng đọc và ngắt vLinker để không giữ các hộp điều khiển của xe thức, có thể tắt trong Cài đặt. Cổng OBD luôn có điện nên trang không cắt điện vLinker được; vLinker tự ngủ khi không còn ai kết nối và tự thức khi nổ máy.</p>
+    <p>Bản 5 thêm: đèn check engine và mã lỗi động cơ (mã OBD chuẩn), ắc quy và máy phát, nhắc máy còn nguội, lốp nóng bất thường, lốp xì chậm (cần vài ngày dữ liệu), thông báo mới của xe trong chuyến, mức xăng nếu xe trả lời. Tên thông báo theo danh sách CC-ID công khai, có thể chưa đúng hết với F30.</p>
     <p>Đặt điện thoại trên giá, không thao tác khi đang lái.</p>
   </footer>
 </div>
@@ -474,7 +479,7 @@ img{max-width:100%}
 <script>
 (function(){
 'use strict';
-const VERSION='Bản 4';
+const VERSION='Bản 5';
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const fmt=(v,d=0)=>(v==null||!isFinite(v))?'--':Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -503,12 +508,13 @@ function saveSettings(){try{localStorage.setItem(SKEY,JSON.stringify(settings));
 if(!settings.mig4){if(settings.tireWarn===2)settings.tireWarn=1.8;settings.mig4=true;saveSettings();}
 
 /* ---------- Dữ liệu ---------- */
-function emptyLive(){return{coolant:null,oil:null,rpm:null,speed:null,intake:null,volt:null,tires:{FL:null,FR:null,RL:null,RR:null},coolantLevel:null,washer:null,oilLevel:null,cc:null,odo:null};}
+function emptyLive(){return{coolant:null,oil:null,rpm:null,speed:null,intake:null,volt:null,tires:{FL:null,FR:null,RL:null,RR:null},coolantLevel:null,washer:null,oilLevel:null,cc:null,odo:null,mil:null,dtcs:null,pend:null,fuel:null,tripOdo:null,vLow:false,vCrit:false};}
 let live=emptyLive();
 const SAMPLE={coolant:96,oil:104,rpm:1850,speed:57,intake:34,volt:14.1,
   tires:{FL:{bar:2.3,c:31},FR:{bar:2.3,c:32},RL:{bar:2.5,c:30},RR:{bar:1.8,c:29}},
   coolantLevel:false,washer:true,oilLevel:false,svcDate:isoLocal(45),svcKm:8500,
-  cc:[{id:164,km:127745},{id:811,km:126008},{id:147,km:122422}],odo:127757};
+  cc:[{id:71,km:127750},{id:164,km:127745},{id:811,km:126008},{id:147,km:122422}],odo:127757,tripOdo:127740,
+  mil:false,dtcs:[],pend:[],fuel:46,vLow:false,vCrit:false};
 let mode='demo';
 
 /* Nhiệt độ dầu: PID 5C đã đối chiếu ngày 7/11 (112°C, khớp DID 4402 = 112.5°C) */
@@ -537,6 +543,7 @@ async function readTires(){
     got.push(k+' '+(p/1000).toFixed(3)+' bar '+t+'°C');
   }
   if(got.length&&!tireLogged){tireLogged=true;log('Áp suất lốp từ DSC: '+got.join(', '));}
+  recordTireHist();
 }
 
 const ECU_NAMES={0x01:'ACSM (túi khí)',0x10:'ZGM (cổng trung tâm)',0x12:'DME (động cơ)',0x18:'EGS (hộp số)',0x29:'DSC (phanh, cân bằng)',0x30:'EPS (trợ lực lái)',0x40:'FEM (điện thân xe)',0x5E:'GWS (cần số)',0x60:'KOMBI (cụm đồng hồ)',0x63:'NBT (màn hình iDrive)',0x78:'IHKA (điều hòa)'};
@@ -729,7 +736,7 @@ async function startSession(){
 }
 async function connect(){
   if(!navigator.bluetooth){$('btNotice').hidden=false;$('btNotice').scrollIntoView({behavior:'smooth',block:'center'});return;}
-  userClosed=false;autoOffFlag=false;
+  userClosed=false;autoOffFlag=false;live.tripOdo=null;
   setPill('busy','Đang tìm thiết bị…');
   try{
     if(!forceChooser&&navigator.bluetooth.getDevices){
@@ -815,11 +822,27 @@ const SLOTS=['coolant','rpm','oil','rpm','intake','rpm','volt','rpm'];
    5 phút để không ngắt nhầm khi Auto Start-Stop tạm tắt máy lúc dừng đèn đỏ. */
 /* Thông báo Check Control đọc từ cụm đồng hồ (KOMBI 0x60).
    D12D: lịch sử, mỗi mục 9 byte = mã thông báo (2) + km (3) + thời gian (4). D10D: số km. Đã khớp với đồng hồ xe ngày 7/11. */
-const CC_INFO={27:['Mức dầu máy thấp','oil','warn'],28:['Dầu máy dưới mức tối thiểu','oil','crit'],63:['Lốp bị xịt','tire','crit'],67:['Pin chìa khóa yếu'],
-  139:['Cảnh báo áp suất lốp','tire','warn'],140:['Cảnh báo áp suất lốp','tire','warn'],141:['Cảnh báo áp suất lốp','tire','warn'],142:['Kiểm tra áp suất lốp','tire','warn'],143:['Cảnh báo áp suất lốp','tire','warn'],
-  147:['Phát hiện lốp xịt','tire','crit'],164:['Nước rửa kính thấp','washer','warn'],166:['Nước làm mát thấp','coolant','crit'],265:['Áp suất các lốp lệch nhau','tire','warn'],
-  281:['Đến hạn bảo dưỡng','svc','warn'],284:['Quá hạn bảo dưỡng','svc','crit'],384:['DSC phát hiện xịt lốp','tire','crit'],557:['Xe có thể trôi, cần cài số P'],
-  608:['Mất áp suất lốp','tire','crit'],609:['Mất áp suất lốp','tire','crit'],610:['Mất áp suất lốp','tire','crit'],611:['Mất áp suất lốp','tire','crit'],811:['Nắp capo mở']};
+/* Tên thông báo theo danh sách CC-ID công khai (EndTuning); nhóm dùng cho mục Cảnh báo; mức: crit cần xử lý, warn cần kiểm tra, không ghi là lưu ý */
+const CC_INFO={
+  27:['Mức dầu máy thấp','oil','warn'],28:['Dầu máy dưới mức tối thiểu','oil','crit'],400:['Mức dầu máy quá cao','oil','warn'],182:['Lỗi cảm biến mức dầu','oil','warn'],212:['Áp suất dầu thấp, dừng máy','oil','crit'],427:['Áp suất dầu máy thấp','oil','crit'],
+  29:['Lỗi động cơ, giảm công suất','gen','warn'],30:['Lỗi động cơ, dừng máy','gen','crit'],31:['Lỗi động cơ, khí thải tăng','gen','warn'],33:['Lỗi động cơ, giảm tải','gen','warn'],
+  39:['Động cơ quá nóng, dừng máy','gen','crit'],257:['Động cơ nóng, chạy nhẹ nhàng','gen','warn'],367:['Nhiệt độ động cơ quá cao','gen','crit'],
+  166:['Nước làm mát thấp','coolant','crit'],164:['Nước rửa kính thấp','washer','warn'],
+  213:['Ắc quy không được sạc','gen','crit'],220:['Ắc quy hao điện nhanh','gen','warn'],229:['Ắc quy yếu','gen','warn'],306:['Ắc quy yếu','gen','warn'],304:['Kiểm tra tình trạng ắc quy','gen','warn'],305:['Kiểm tra cọc ắc quy','gen','warn'],247:['Lỗi giám sát ắc quy','gen','warn'],
+  71:['Má phanh mòn','gen','warn'],328:['Lỗi cảm biến mòn má phanh','gen','warn'],74:['Dầu phanh thấp','gen','crit'],352:['Phanh quá nóng','gen','warn'],353:['Phanh quá nhiệt','gen','crit'],
+  35:['DSC hỏng','gen','crit'],236:['Lỗi hệ thống phanh và cân bằng','gen','crit'],237:['Lỗi hệ thống cân bằng','gen','crit'],
+  63:['Lốp bị xịt','tire','crit'],147:['Phát hiện lốp xịt','tire','crit'],384:['DSC phát hiện xịt lốp','tire','crit'],
+  139:['Áp suất lốp trước trái','tire','warn'],143:['Áp suất lốp trước phải','tire','warn'],141:['Áp suất lốp sau trái','tire','warn'],140:['Áp suất lốp sau phải','tire','warn'],
+  142:['Kiểm tra áp suất lốp','tire','warn'],265:['Áp suất các lốp lệch nhau','tire','warn'],144:['Lỗi hệ thống áp suất lốp','tire','warn'],149:['Hệ thống áp suất lốp hỏng','tire','warn'],
+  608:['Mất áp suất lốp trước trái','tire','crit'],609:['Mất áp suất lốp trước phải','tire','crit'],610:['Mất áp suất lốp sau phải','tire','crit'],611:['Mất áp suất lốp sau trái','tire','crit'],
+  103:['Hộp số nóng, chạy nhẹ nhàng','gen','warn'],104:['Hộp số nóng, giảm công suất','gen','warn'],105:['Hộp số quá nóng, dừng xe','gen','crit'],172:['Lỗi hộp số','gen','crit'],288:['Lỗi hộp số, chế độ dự phòng','gen','crit'],307:['Lỗi hộp số nhiều chỗ','gen','crit'],
+  73:['Trợ lực lái không hoạt động','gen','crit'],385:['Mất trợ lực lái','gen','crit'],
+  231:['Lỗi hệ thống đèn','gen','warn'],88:['Hỏng đèn cốt trái','gen','warn'],89:['Hỏng đèn cốt phải','gen','warn'],134:['Hỏng đèn phanh phải','gen','warn'],135:['Hỏng đèn phanh giữa','gen','warn'],136:['Hỏng đèn phanh trái','gen','warn'],
+  281:['Đến hạn bảo dưỡng','svc','warn'],284:['Quá hạn bảo dưỡng','svc','crit'],
+  65:['Pin chìa khóa yếu'],67:['Pin chìa khóa yếu'],68:['Pin chìa khóa yếu'],
+  14:['Cửa trước phải mở'],15:['Cửa trước trái mở'],16:['Cửa sau trái mở'],17:['Cửa sau phải mở'],18:['Nắp capo mở'],19:['Cốp mở'],811:['Nắp capo mở'],
+  557:['Xe có thể trôi, cần cài số P']
+};
 const CC_RECENT_KM=300;
 let ccLast=0,ccSig='';
 function parseCcHist(d){
@@ -841,6 +864,7 @@ async function readCC(){
     if(sig!==ccSig){ccSig=sig;log('Thông báo của xe (mã@km): '+(list.map(e=>e.id+'@'+e.km).join(', ')||'không có')+(live.odo!=null?' · ODO '+live.odo:''));}
     live.cc=list;
   }
+  if(live.tripOdo==null&&live.odo!=null)live.tripOdo=live.odo;
 }
 /* Các mã trả lời "chưa đủ điều kiện" hoặc "đang bận" khi đỗ xe ngày 7/11; thử lại khi xe chạy để tìm số áp suất lốp */
 const PROBE=[[0x40,0xD073],[0x40,0xD074],[0x40,0xD08B],[0x40,0xD347],[0x40,0xD369],[0x40,0xD36A],[0x40,0xD389],[0x40,0xD399],[0x40,0xD39A],[0x40,0xD39B],[0x40,0xD3BE],[0x40,0xDA0D],[0x40,0xDBEA],[0x40,0xDBEB],[0x40,0xDC83],[0x40,0xDC84],[0x40,0xDC85],[0x40,0x4910],
@@ -869,6 +893,78 @@ async function ccSnap(){
   for(const did of SNAP){const r=await readDid(0x60,did);log('60 '+didStr(did)+' '+(r.ok?'= '+hexs(r.data):r.none?'không trả lời':'! '+hx(r.nrc==null?0:r.nrc)));}
   log('— Hết lần '+snapN+' —');
 }
+/* Đèn check engine và mã lỗi động cơ: mã OBD chuẩn, mode 01 PID 01, mode 03 (đã lưu), mode 07 (chờ xác nhận) */
+const PCODES=[[0x0010,0x0015,'Điều chỉnh trục cam (VANOS)'],[0x0016,0x0019,'Lệch pha trục cam và trục khuỷu'],[0x0030,0x0064,'Cảm biến oxy hoặc bộ sấy'],
+  [0x0100,0x0104,'Cảm biến lưu lượng khí nạp'],[0x0105,0x0109,'Cảm biến áp suất đường nạp'],[0x0110,0x0114,'Cảm biến nhiệt độ khí nạp'],[0x0115,0x0119,'Cảm biến nhiệt độ nước làm mát'],
+  [0x0128,0x0128,'Nước làm mát chậm nóng, nghi van hằng nhiệt'],[0x0130,0x0167,'Cảm biến oxy'],[0x0171,0x0171,'Hỗn hợp nghèo, nghi hở khí nạp hoặc kim phun'],[0x0172,0x0172,'Hỗn hợp giàu'],
+  [0x0174,0x0174,'Hỗn hợp nghèo'],[0x0175,0x0175,'Hỗn hợp giàu'],[0x0234,0x0234,'Áp suất turbo quá cao'],[0x0299,0x0299,'Áp suất turbo thấp'],[0x0300,0x0300,'Bỏ máy nhiều xi-lanh'],
+  [0x0301,0x0304,'Bỏ máy xi-lanh '],[0x0325,0x0334,'Cảm biến kích nổ'],[0x0335,0x0339,'Cảm biến trục khuỷu'],[0x0340,0x0349,'Cảm biến trục cam'],[0x0365,0x0369,'Cảm biến trục cam'],
+  [0x0420,0x0420,'Hiệu suất bộ xúc tác thấp'],[0x0440,0x0457,'Hệ thống hơi xăng, kiểm tra nắp bình xăng'],[0x0505,0x0507,'Tốc độ không tải bất thường'],[0x0560,0x0563,'Điện áp hệ thống bất thường'],
+  [0x0600,0x0606,'Lỗi hộp điều khiển động cơ'],[0x0700,0x0700,'Hộp số báo lỗi']];
+function pDesc(code){
+  if(!code||code[0]!=='P')return'';
+  const n=parseInt(code.slice(1),16);
+  for(const [a,b,t] of PCODES)if(n>=a&&n<=b)return t+(a===0x0301?(n-0x0300):'');
+  return'';
+}
+function parseDtcs(b){
+  let a=b.slice();
+  if(a.length%2===1)a=a.slice(1);
+  const out=[];
+  for(let i=0;i+1<a.length;i+=2){
+    const A=a[i],B=a[i+1];if(!A&&!B)continue;
+    out.push('PCBU'[A>>6]+((A>>4)&3)+(A&15).toString(16).toUpperCase()+hx(B));
+  }
+  return out;
+}
+let engLast=0,engSig='';
+async function readEngineFaults(){
+  engLast=Date.now();
+  const m=await obd(1,0x01);
+  if(m&&m.length){live.mil=!!(m[0]&0x80);}
+  const r=await isotp('7DF','7E8',null,[0x03]);
+  if(r&&r[0]===0x43)live.dtcs=parseDtcs(r.slice(1));
+  const q=await isotp('7DF','7E8',null,[0x07]);
+  if(q&&q[0]===0x47)live.pend=parseDtcs(q.slice(1));
+  const sig=JSON.stringify([live.mil,live.dtcs,live.pend]);
+  if(sig!==engSig){engSig=sig;log('Động cơ: đèn check engine '+(live.mil?'SÁNG':'tắt')+' · mã lưu: '+((live.dtcs||[]).join(', ')||'không')+' · mã chờ: '+((live.pend||[]).join(', ')||'không'));}
+}
+/* Mức xăng: mã OBD chuẩn PID 2F; xe không trả lời thì thôi hỏi */
+let fuelLast=0,fuelMiss=0,fuelOK=null;
+async function readFuel(){
+  fuelLast=Date.now();
+  const f=await obd(1,0x2F);
+  if(f&&f.length){live.fuel=f[0]*100/255;if(fuelOK!==true)log('Mức xăng: '+fmt(live.fuel)+'%');fuelOK=true;fuelMiss=0;}
+  else if(fuelOK!==true&&++fuelMiss>=3){fuelOK=false;log('Xe không trả lời mức xăng (mã OBD chuẩn PID 2F).');}
+}
+/* Theo dõi lốp xì chậm: mỗi ngày lưu áp suất lúc xe chạy, quy về 20°C để bỏ ảnh hưởng nhiệt độ */
+const TH_KEY='f30-tire-hist-v1';
+let tireHist={};try{tireHist=JSON.parse(localStorage.getItem(TH_KEY)||'{}')||{};}catch(e){tireHist={};}
+let thSaved=0;
+const p20=(bar,c)=>(bar+1.013)*293.15/(c+273.15)-1.013;
+function dayKey(t){t=t||new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');}
+function saveTireHist(){thSaved=Date.now();try{localStorage.setItem(TH_KEY,JSON.stringify(tireHist));}catch(e){}}
+function recordTireHist(){
+  if(!(live.speed>20))return;
+  const rec={};
+  for(const k of WHEELS){const t=live.tires[k];if(!t||t.c==null)return;rec[k]=+p20(t.bar,t.c).toFixed(3);}
+  tireHist[dayKey()]=rec;
+  const keys=Object.keys(tireHist).sort();while(keys.length>40)delete tireHist[keys.shift()];
+  if(Date.now()-thSaved>300000)saveTireHist();
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&thSaved)saveTireHist();});
+function slowLeak(){
+  const today=dayKey(),cur=tireHist[today];if(!cur)return null;
+  const t0=new Date(today+'T00:00:00');
+  let base=null,baseKey=null;
+  for(const k of Object.keys(tireHist).sort()){const age=(t0-new Date(k+'T00:00:00'))/86400000;if(age>=4&&age<=30){base=tireHist[k];baseKey=k;}}
+  if(!base)return null;
+  const drops={};for(const k of WHEELS)drops[k]=base[k]-cur[k];
+  const out=[];
+  for(const k of WHEELS){const o=WHEELS.filter(x=>x!==k).map(x=>drops[x]).sort((a,b)=>a-b);const rel=drops[k]-o[1];if(rel>=0.1)out.push({k,drop:rel,since:baseKey});}
+  return out;
+}
+let vLowSince=0,vCritSince=0;
 function autoOff(msg){
   log(msg);
   autoOffFlag=true;userClosed=true;polling=false;
@@ -889,10 +985,21 @@ async function pollLoop(){
       else if(slot==='rpm'){const r=await obd(1,0x0C);if(r&&r.length>=2)live.rpm=((r[0]<<8)|r[1])/4;}
       else if(slot==='oil'){if(oilSrc){const o=await readCand(oilSrc);if(plausible(o.v))live.oil=o.v;}}
       else if(slot==='intake'){const i=await obd(1,0x0F);if(i)live.intake=i[0]-40;}
-      else if(slot==='volt'){const v=await locked(()=>send('ATRV'));const m=/(\d+(?:\.\d+)?)\s*V/i.exec(v);if(m)live.volt=parseFloat(m[1]);}
+      else if(slot==='volt'){
+        const v=await locked(()=>send('ATRV'));const m=/(\d+(?:\.\d+)?)\s*V/i.exec(v);
+        if(m){
+          live.volt=parseFloat(m[1]);
+          const run=live.rpm!=null&&live.rpm>500,tn=Date.now();
+          if(run&&live.volt<12.3){if(!vLowSince)vLowSince=tn;}else vLowSince=0;
+          if(run&&live.volt<11.8){if(!vCritSince)vCritSince=tn;}else vCritSince=0;
+          live.vLow=!!vLowSince&&tn-vLowSince>120000;live.vCrit=!!vCritSince&&tn-vCritSince>30000;
+        }
+      }
       if(cycle%3===1)await probeStep();
       if(Date.now()-ccLast>60000)await readCC();
       if(Date.now()-tireLast>8000)await readTires();
+      if(Date.now()-engLast>120000)await readEngineFaults();
+      if(fuelOK!==false&&Date.now()-fuelLast>30000)await readFuel();
       const now=Date.now();
       if(s&&s.length)lastAlive=now;
       if((live.rpm!=null&&live.rpm>300)||(live.speed!=null&&live.speed>0))lastRun=now;
@@ -939,11 +1046,12 @@ function tireState(t,avg){
 function worst(states){
   if(states.includes('crit'))return'crit';
   if(states.includes('warn'))return'warn';
+  if(states.includes('info'))return'info';
   const known=states.filter(Boolean);
   if(!known.length)return'idle';
   return known.length<states.length?'part':'ok';
 }
-const CHIP={ok:'Bình thường',warn:'Cần kiểm tra',crit:'Cần xử lý',part:'Đọc được một phần',idle:'Chưa đọc được'};
+const CHIP={info:'Lưu ý',ok:'Bình thường',warn:'Cần kiểm tra',crit:'Cần xử lý',part:'Đọc được một phần',idle:'Chưa đọc được'};
 const NOT_YET='Chưa đọc được từ xe, đồng hồ xe vẫn tự báo';
 function svcInfo(d){
   const date=settings.svcDate||(mode==='demo'?d.svcDate:'');
@@ -956,8 +1064,23 @@ function ccHit(d,cat){
   return d.cc.find(e=>CC_INFO[e.id]&&CC_INFO[e.id][1]===cat&&d.odo-e.km<=CC_RECENT_KM&&e.km<=d.odo+5)||null;
 }
 const ccAgo=(d,e)=>' ở km '+fmt(e.km)+(d.odo-e.km>0?', cách đây '+fmt(d.odo-e.km)+' km':'');
+const CC_COVERED=['oil','tire','washer','coolant'];
+function ccTrip(d){
+  if(!Array.isArray(d.cc)||d.tripOdo==null)return undefined;
+  return d.cc.filter(e=>e.km>=d.tripOdo-2&&!(CC_INFO[e.id]&&CC_COVERED.includes(CC_INFO[e.id][1])));
+}
 function warnings(d){
   const items=[];
+  { let s,det;
+    const st=d.dtcs||[],pd=(d.pend||[]).filter(c=>!st.includes(c));
+    const fc=c=>c+(pDesc(c)?' '+pDesc(c).toLowerCase():'');
+    const all=st.map(fc).concat(pd.map(c=>fc(c)+' (chưa xác nhận)'));
+    if(d.mil==null&&d.dtcs==null){s='idle';det='Chưa đọc được';}
+    else if(d.mil){s='crit';det='Đèn check engine sáng'+(all.length?' · '+all.join(', '):'');}
+    else if(all.length){s='warn';det='Có mã lỗi lưu: '+all.join(', ');}
+    else{s='ok';det='Không có mã lỗi động cơ';}
+    items.push({name:'Động cơ',s,det});
+  }
   { const st=[],msg=[],h=ccHit(d,'coolant');
     if(d.coolantLevel===true){st.push('crit');msg.push('Mức nước mát thấp, cần bổ sung');}
     else if(h){st.push('crit');msg.push('Xe báo nước làm mát thấp'+ccAgo(d,h));}
@@ -985,6 +1108,14 @@ function warnings(d){
       else if(s==='warn')probs.push(POS[k]+' '+fmt(t.bar,2)+' bar, đang thấp');
     }
     if(h){st.push(CC_INFO[h.id][2]);probs.unshift('Xe báo '+ccName(h.id).toLowerCase()+ccAgo(d,h));}
+    const tc=k=>d.tires[k]&&d.tires[k].c!=null?d.tires[k].c:null;
+    for(const [a,b] of [['FL','FR'],['RL','RR']]){
+      const ta=tc(a),tb=tc(b);if(ta==null||tb==null)continue;
+      if(Math.abs(ta-tb)>=8){const hot=ta>tb?a:b;st.push('warn');probs.push(POS[hot]+' nóng hơn bánh cùng trục '+fmt(Math.abs(ta-tb))+'°C, kiểm tra phanh bó hoặc bạc đạn');}
+    }
+    for(const k of WHEELS){const t=tc(k);if(t!=null&&t>=75){st.push('warn');probs.push(POS[k]+' nóng '+fmt(t)+'°C');}}
+    const sl=mode==='live'?slowLeak():null;
+    if(sl)for(const x of sl){st.push('warn');probs.push(POS[x.k]+' có thể xì chậm: giảm '+fmt(x.drop,2)+' bar so với ngày '+x.since.slice(8)+'/'+x.since.slice(5,7)+' (đã quy về 20°C)');}
     let s,det;
     if(vals.length){s=worst(st);det=probs.length?probs.join(' · '):'4 lốp từ '+fmt(Math.min(...vals),2)+' đến '+fmt(Math.max(...vals),2)+' bar';}
     else if(h){s=CC_INFO[h.id][2];det=probs.join(' · ');}
@@ -1004,8 +1135,26 @@ function warnings(d){
     else if(sv.days<=30){st.push('warn');msg.unshift('Còn '+fmt(sv.days)+' ngày đến hạn thay dầu');}
     else{st.push('ok');msg.push('còn '+fmt(sv.days)+' ngày đến hạn thay');}
     if(d.oil!=null&&d.oil>=settings.oilMax){st.push('warn');msg.unshift('Dầu nóng '+fmt(d.oil)+'°C');}
+    if(d.oil!=null&&d.oil<70&&d.rpm!=null&&d.rpm>400){st.push('info');msg.unshift('Máy còn nguội ('+fmt(d.oil)+'°C), chưa nên tăng tốc mạnh');}
     items.push({name:'Dầu máy',s:worst(st),det:msg.join(' · ')});
   }
+  { let s,det;const v=d.volt,run=d.rpm!=null&&d.rpm>500;
+    if(v==null){s='idle';det='Chưa đọc được';}
+    else if(d.vCrit){s='crit';det='Máy đang chạy mà chỉ '+fmt(v,1)+' V, máy phát có thể không sạc';}
+    else if(d.vLow){s='warn';det='Điện áp thấp khi máy chạy ('+fmt(v,1)+' V), kiểm tra máy phát và ắc quy';}
+    else if(v>15.2){s='warn';det='Điện áp cao ('+fmt(v,1)+' V), kiểm tra bộ sạc';}
+    else if(!run&&v<11.6){s='crit';det='Ắc quy rất yếu ('+fmt(v,1)+' V khi chưa nổ máy)';}
+    else if(!run&&v<12.0){s='warn';det='Ắc quy yếu ('+fmt(v,1)+' V khi chưa nổ máy)';}
+    else{s='ok';det=fmt(v,1)+' V'+(run?' · đang sạc bình thường':'');}
+    items.push({name:'Ắc quy',s,det});
+  }
+  { const tr=ccTrip(d);
+    if(tr!==undefined){
+      if(!tr.length)items.push({name:'Thông báo mới',s:'ok',det:'Xe không báo gì mới trong chuyến này'});
+      else items.push({name:'Thông báo mới',s:worst(tr.map(e=>CC_INFO[e.id]&&CC_INFO[e.id][2]||'info')),det:'Xe vừa báo: '+tr.map(e=>ccName(e.id)).join(', ')});
+    }
+  }
+  if(d.fuel!=null&&d.fuel<10)items.push({name:'Xăng',s:'warn',det:'Sắp hết xăng, còn '+fmt(d.fuel)+'%'});
   return items;
 }
 function renderHist(d){
@@ -1030,6 +1179,7 @@ function render(){
   $('vRpm').textContent=fmt(d.rpm);
   $('vIntake').textContent=fmt(d.intake);
   $('vVolt').textContent=fmt(d.volt,1);
+  { const hf=d.fuel!=null;$('statFuel').hidden=!hf;$('statsCard').classList.toggle('has-fuel',hf);$('vFuel').textContent=fmt(d.fuel); }
   const avg=tireAvg(d.tires);
   for(const k of WHEELS){
     const t=d.tires[k],el=$('t'+k);
@@ -1042,8 +1192,8 @@ function render(){
   $('ccList').innerHTML=items.map(i=>'<li class="s-'+i.s+'"><span class="dot"></span><div><div class="name">'+i.name+'</div><div class="det">'+i.det+'</div></div><span class="chip">'+CHIP[i.s]+'</span></li>').join('');
   const nc=items.filter(i=>i.s==='crit').length,nw=items.filter(i=>i.s==='warn').length;
   $('ccSummary').textContent=nc||nw?[nc?nc+' cần xử lý':'',nw?nw+' cần kiểm tra':''].filter(Boolean).join(' · '):'Không có cảnh báo';
-  const bad=items.filter(i=>i.s==='crit').concat(items.filter(i=>i.s==='warn'));
-  const wcls=nc?'crit':nw?'warn':items.some(i=>i.s==='ok')?'ok':items.some(i=>i.s==='part')?'part':'idle';
+  const bad=items.filter(i=>i.s==='crit').concat(items.filter(i=>i.s==='warn'),items.filter(i=>i.s==='info'));
+  const wcls=nc?'crit':nw?'warn':items.some(i=>i.s==='info')?'info':items.some(i=>i.s==='ok')?'ok':items.some(i=>i.s==='part')?'part':'idle';
   $('warnBar').className='warnbar s-'+wcls;
   $('warnText').textContent=bad.length?bad.map(i=>i.name+': '+i.det).join(' · '):wcls==='idle'?'Chưa đọc được cảnh báo':'Không có cảnh báo';
   const sv=svcInfo(d),box=$('svcStatus');
