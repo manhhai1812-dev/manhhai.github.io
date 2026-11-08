@@ -362,7 +362,7 @@ img{max-width:100%}
     </details>
   </section>
 
-  <section class="card ts" id="tsCard" aria-labelledby="tsTitle">
+  <section class="card ts" id="tsCard" aria-labelledby="tsTitle" hidden>
     <div class="card-head" style="margin-bottom:0"><h2 id="tsTitle">Tìm mã áp suất lốp</h2><span class="hint" id="tsState">Chưa chạy</span></div>
     <p class="muted">Chạy xe đến khi iDrive hiện số 4 lốp, đỗ lại và để máy nổ. Sửa các ô dưới đây cho khớp số đang hiện trong iDrive, rồi bấm <b>Bắt đầu tìm</b>. Đợt 2 hỏi hộp phanh, cân bằng DSC trước, rồi 7 hộp chưa rõ tên, tổng cộng khoảng 40–45 phút. Có thể chia làm nhiều lần: dừng giữa chừng hoặc mất kết nối thì lần sau bấm <b>Tiếp tục</b>, không mất phần đã dò.</p>
     <div class="refs" id="refs">
@@ -420,6 +420,7 @@ img{max-width:100%}
       <div class="row">
         <button class="btn small" id="btnScanEcu" type="button" data-lab disabled>Quét hộp điều khiển</button>
         <button class="btn small" id="btnOilTest" type="button" data-lab disabled>Thử mã nhiệt độ dầu</button>
+        <button class="btn small" id="btnShowTs" type="button">Mở mục tìm mã lốp</button>
         <button class="btn small" id="btnStop" type="button" disabled>Dừng</button>
       </div>
       <div class="prog" id="labProg" aria-live="polite"></div>
@@ -463,8 +464,8 @@ img{max-width:100%}
 
   <footer class="foot">
     <p>Tốc độ trên trang là tốc độ thực đọc từ OBD, thường thấp hơn kim đồng hồ trên xe vài km/h; máy bắn tốc độ cũng đo tốc độ thực. Số chuyển vàng khi còn 3 km/h là chạm giới hạn, chuyển đỏ và bíp khi đã vượt.</p>
-    <p>Bản 3.5 · 8/11/2026. Nước mát, vòng tua, tốc độ, khí nạp đọc bằng mã OBD chuẩn. Nhiệt độ dầu dùng mã PID 5C, đã đối chiếu ngày 7/11: trang đọc 112°C, mã riêng của BMW cũng ra 112.5°C, kim đồng hồ xe gần vạch 120.</p>
-    <p>Cảnh báo thiếu nước làm mát, nước rửa kính, dầu máy và lỗi lốp lấy từ lịch sử thông báo của xe, nên chỉ hiện sau khi xe đã báo trên đồng hồ. Số áp suất lốp chưa đọc được; trong lúc xe chạy, trang thử đọc thêm một số mã và ghi vào nhật ký.</p>
+    <p>Bản 3.6 · 8/11/2026. Nước mát, vòng tua, tốc độ, khí nạp đọc bằng mã OBD chuẩn. Nhiệt độ dầu dùng mã PID 5C, đã đối chiếu ngày 7/11: trang đọc 112°C, mã riêng của BMW cũng ra 112.5°C, kim đồng hồ xe gần vạch 120.</p>
+    <p>Cảnh báo thiếu nước làm mát, nước rửa kính, dầu máy và lỗi lốp lấy từ lịch sử thông báo của xe, nên chỉ hiện sau khi xe đã báo trên đồng hồ. Số áp suất và nhiệt độ lốp không đọc được qua cổng OBD: ngày 7–8/11 đã dò 15 khoảng mã ở 12 hộp điều khiển mà không thấy; xem số lốp trên iDrive.</p>
     <p>Khi xe tắt máy, trang tự ngừng đọc và ngắt vLinker để không giữ các hộp điều khiển của xe thức, có thể tắt trong Cài đặt. Cổng OBD luôn có điện nên trang không cắt điện vLinker được; vLinker tự ngủ khi không còn ai kết nối và tự thức khi nổ máy.</p>
     <p>Đặt điện thoại trên giá, không thao tác khi đang lái.</p>
   </footer>
@@ -473,7 +474,7 @@ img{max-width:100%}
 <script>
 (function(){
 'use strict';
-const VERSION='Bản 3.5';
+const VERSION='Bản 3.6';
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const fmt=(v,d=0)=>(v==null||!isFinite(v))?'--':Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -517,7 +518,7 @@ let oilSrc=null;
 /* Bản 3 sẽ điền mã lốp sau khi dò */
 const TIRE_SOURCE=null;
 
-const ECU_NAMES={0x01:'ACSM (túi khí)',0x10:'ZGM (cổng trung tâm)',0x12:'DME (động cơ)',0x18:'EGS (hộp số)',0x29:'DSC (phanh, cân bằng)',0x30:'EPS (trợ lực lái)',0x40:'FEM (điện thân xe)',0x60:'KOMBI (cụm đồng hồ)',0x63:'NBT (màn hình iDrive)',0x78:'IHKA (điều hòa)'};
+const ECU_NAMES={0x01:'ACSM (túi khí)',0x10:'ZGM (cổng trung tâm)',0x12:'DME (động cơ)',0x18:'EGS (hộp số)',0x29:'DSC (phanh, cân bằng)',0x30:'EPS (trợ lực lái)',0x40:'FEM (điện thân xe)',0x5E:'GWS (cần số)',0x60:'KOMBI (cụm đồng hồ)',0x63:'NBT (màn hình iDrive)',0x78:'IHKA (điều hòa)'};
 const NRC={0x10:'từ chối chung',0x11:'không hỗ trợ dịch vụ',0x12:'không hỗ trợ',0x13:'sai độ dài',0x22:'chưa đủ điều kiện',0x31:'không có mã này',0x33:'cần mở khóa bảo mật',0x7E:'cần đổi chế độ',0x7F:'cần đổi chế độ'};
 
 /* ---------- Nhật ký ---------- */
@@ -1012,7 +1013,7 @@ function render(){
     el.className='tire '+tireState(t,avg);
     el.innerHTML='<div class="pos">'+POS[k]+'</div><div class="p">'+(t?fmt(t.bar,1):'--')+'<small>bar</small></div><div class="t">'+(t&&t.c!=null?fmt(t.c)+'°C':'-- °C')+'</div>';
   }
-  $('tireHint').textContent=mode==='demo'?'Dữ liệu mẫu':TIRE_SOURCE?'':'Chưa đọc được số, đang thử khi xe chạy';
+  $('tireHint').textContent=mode==='demo'?'Dữ liệu mẫu':TIRE_SOURCE?'':'Xem số trên iDrive · trang vẫn báo khi xe báo lỗi lốp';
   renderHist(d);
   const items=warnings(d);
   $('ccList').innerHTML=items.map(i=>'<li class="s-'+i.s+'"><span class="dot"></span><div><div class="name">'+i.name+'</div><div class="det">'+i.det+'</div></div><span class="chip">'+CHIP[i.s]+'</span></li>').join('');
@@ -1299,7 +1300,7 @@ async function runTireScan(fresh){
     const strong=scan.cands.some(c=>c.strong);
     if(!txChar&&!scan.done)paused='Mất kết nối khi đang dò. Kết nối lại rồi bấm Tiếp tục.';
     else if(stopFlag&&!scan.done)paused='Đã dừng. Bấm Tiếp tục để dò tiếp từ chỗ dừng.';
-    else if(scan.done)paused='Đã dò xong. '+(strong?'Có dữ liệu khớp số lốp. ':'Chưa thấy dữ liệu khớp rõ. ')+'Bấm Sao chép kết quả rồi gửi cho Claude.';
+    else if(scan.done)paused='Đã dò xong. '+(strong?'Có mã trang đánh dấu là giống số lốp, cần Claude kiểm tra. ':'Chưa thấy dữ liệu khớp rõ. ')+'Bấm Sao chép kết quả rồi gửi cho Claude.';
     scanMsg=paused||null;
   });
   scanRunning=false;updateScanUI();
@@ -1444,6 +1445,7 @@ function copyLogTo(msgId){
 $('btnCopy').addEventListener('click',()=>copyLogTo('copyMsg'));
 $('btnCopy2').addEventListener('click',()=>copyLogTo('copyMsg2'));
 $('btnCcSnap').addEventListener('click',()=>runLab(ccSnap));
+$('btnShowTs').addEventListener('click',()=>{const c=$('tsCard');c.hidden=!c.hidden;if(!c.hidden)c.scrollIntoView({behavior:'smooth',block:'start'});});
 
 /* ---------- Khởi động ---------- */
 try{const old=JSON.parse(localStorage.getItem(LOG_KEY)||'[]');if(Array.isArray(old)&&old.length){logLines.push(...old);logPending.push(...old.slice(-300));}}catch(e){}
