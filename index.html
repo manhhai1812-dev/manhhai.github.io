@@ -42,6 +42,8 @@ body{
   padding-block:10px 40px;
 }
 .wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.cockpit{display:flex;flex-direction:column;gap:14px}
+.leftcol{display:contents}
 @media (max-width:520px){h1{font-size:23px!important}.sub{display:none}}
 h1{font-family:var(--f-num);font-weight:700;font-size:30px;letter-spacing:.01em;line-height:1.05;margin:0;text-wrap:balance}
 h2{font-family:var(--f-num);font-weight:600;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0}
@@ -125,6 +127,8 @@ label{font-size:12.5px;color:var(--muted)}
 .sign{flex:none;width:clamp(56px,min(18vw,9vh),96px);aspect-ratio:1;border-radius:50%;background:#fff;border:clamp(6px,1.8vw,10px) solid #d71920;color:#111;display:flex;align-items:center;justify-content:center;font-family:var(--f-num);font-weight:700;font-size:clamp(24px,min(7.5vw,4vh),42px);font-variant-numeric:tabular-nums}
 .sign.off{background:transparent;border:2px dashed var(--line);color:var(--muted);font-family:var(--f-body);font-size:12.5px;font-weight:500}
 .spd-tools{display:flex;flex-direction:column;gap:8px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));width:max-content;max-width:min(92vw,520px);background:var(--panel-2);color:var(--text);border:1px solid var(--amber);border-radius:10px;padding:10px 14px;font-size:13.5px;line-height:1.45;z-index:20}
+.icon-btn[aria-pressed="true"]{color:var(--amber);border-color:var(--amber)}
 .icon-btn{width:38px;height:38px;min-height:0;padding:0;display:flex;align-items:center;justify-content:center;border-radius:10px;color:var(--muted)}
 .icon-btn[aria-pressed="true"]{color:var(--amber);border-color:rgba(243,154,43,.55)}
 .limits{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px}
@@ -171,25 +175,50 @@ label{font-size:12.5px;color:var(--muted)}
   .dash .tire .p{font-size:23px}
   .limits .btn{min-height:30px}
 }
+/* Xoay ngang: màn hình buồng lái vừa đúng một màn hình.
+   Trái: hai đồng hồ nhiệt độ và thông số máy. Giữa: tốc độ, giới hạn, dòng cảnh báo. Phải: sơ đồ 4 lốp như iDrive. */
 @media (orientation:landscape) and (max-height:560px){
-  .wrap{max-width:none;gap:10px}
-  .top h1{font-size:22px}
-  .sub{display:none}
+  body{padding-block:8px}
+  .wrap{max-width:none;gap:12px}
+  .cockpit{display:grid;height:calc(100vh - 16px);height:calc(100dvh - 16px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:290px;
+    grid-template-columns:minmax(0,.9fr) minmax(0,1.5fr) minmax(0,1.1fr);grid-template-rows:auto minmax(0,1fr) auto;
+    grid-template-areas:"left top tires" "left speed tires" "left warn tires";gap:8px}
+  .cockpit:has(> #btNotice:not([hidden])){height:auto;grid-template-rows:auto auto minmax(220px,1fr) auto;grid-template-areas:"note note note" "left top tires" "left speed tires" "left warn tires"}
+  #btNotice{grid-area:note}
+  #demoBanner{display:none}
+  .dash{display:contents}
+  .top{grid-area:top;justify-content:flex-end}
+  .top h1,.sub{display:none}
+  .top .btn{min-height:34px;padding:5px 14px}
+
+  .leftcol{grid-area:left;display:flex;flex-direction:column;gap:8px;min-height:0}
+  .dash .gauges{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+  .dash .gauge{flex:1;min-height:0;justify-content:center;padding:6px}
+  .dash .gauge svg{flex:1 1 auto;min-height:0;width:100%;max-width:none;height:auto}
+  .dash .g-name{font-size:12.5px}
   .dash .g-src{display:none}
+  .dash .stats,.dash .stats.has-fuel{grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 10px;padding:8px 10px}
+  .stat .k{font-size:11px}
+  .stat .v{font-size:clamp(18px,6.5vh,26px)}
+
+  .speedcard{grid-area:speed;min-height:0;justify-content:space-between;position:relative;container-type:inline-size}
+  .spd{flex:1;min-height:0}
+  #vSpeedBig{font-size:clamp(72px,min(34vh,11vw),180px);font-size:clamp(64px,min(40vh,64cqw - 104px),190px)}
+  .sign{width:clamp(52px,22vh,104px);font-size:clamp(22px,9.5vh,44px);border-width:clamp(5px,2.2vh,10px)}
+  .limits .btn{min-height:30px;font-size:15px}
+  .warnbar{grid-area:warn;min-height:36px;padding:5px 12px}
+  body.is-demo .speedcard::after{content:"Dữ liệu mẫu";position:absolute;top:8px;left:10px;font-size:11.5px;line-height:1.4;color:var(--amber);border:1px dashed var(--amber);border-radius:6px;padding:0 6px}
+
+  .tirecard{grid-area:tires;display:flex;flex-direction:column;min-height:0}
+  .tirecard .card-head{margin-bottom:6px}
+  .tirecard .hint{display:none}
+  .dash .tires{flex:1;min-height:0;grid-template-columns:minmax(0,1fr) clamp(20px,7vh,40px) minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:8px 6px}
+  .dash .car{width:100%;height:100%;max-height:100%}
+  .dash .tire{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:6px 8px;min-height:0}
+  .dash .tire .pos{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .dash .tire .p{font-size:clamp(22px,10vh,40px);line-height:1.05}
   .dash .tire .p small{display:none}
-  .dash{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);grid-template-areas:"speed gauges" "speed stats" "warn tires";gap:8px;align-items:start}
-  .dash .tire .pos{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .speedcard{grid-area:speed;align-self:stretch;justify-content:center}
-  .warnbar{grid-area:warn}
-  .dash .gauges{grid-area:gauges}
-  .dash .stats{grid-area:stats}
-  .tirecard{grid-area:tires}
-  #vSpeedBig{font-size:clamp(72px,30vh,150px)}
-  .sign{width:clamp(56px,20vh,96px);font-size:clamp(24px,9vh,42px)}
-  .dash .gauge svg{max-width:clamp(80px,22vh,130px)}
-  .dash .tires{grid-template-columns:repeat(4,minmax(0,1fr))}
-  .dash .car{display:none}
-  .dash #tFL,.dash #tFR,.dash #tRL,.dash #tRR{grid-column:auto;grid-row:auto}
+  .dash .tire .t{font-size:clamp(11px,4vh,15px)}
 }
 
 /* tires */
@@ -268,6 +297,8 @@ img{max-width:100%}
 </head>
 <body>
 <div class="wrap">
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <div class="cockpit">
   <header class="top">
     <div>
       <h1>Đồng hồ phụ F30</h1>
@@ -300,6 +331,7 @@ img{max-width:100%}
         <div class="spd-tools">
           <button class="btn icon-btn" id="btnBeep" type="button" aria-pressed="true" aria-label="Bíp khi vượt giới hạn" title="Bíp khi vượt giới hạn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></button>
           <button class="btn icon-btn" id="btnFs" type="button" aria-label="Toàn màn hình" title="Toàn màn hình"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+          <button class="btn icon-btn" id="btnRotate" type="button" aria-label="Xoay ngang" title="Xoay ngang"></button>
         </div>
       </div>
       <div class="limits" id="limits" aria-label="Giới hạn tốc độ"></div>
@@ -307,6 +339,7 @@ img{max-width:100%}
 
     <button class="warnbar" id="warnBar" type="button" aria-label="Xem chi tiết cảnh báo"><span class="dot"></span><span class="txt" id="warnText">Đang kiểm tra…</span><span class="more">Chi tiết</span></button>
 
+    <div class="leftcol">
     <section class="gauges" aria-label="Nhiệt độ">
       <div class="gauge">
         <svg id="gCoolant" viewBox="0 0 120 96" role="img" aria-label="Nhiệt độ nước làm mát"></svg>
@@ -326,6 +359,7 @@ img{max-width:100%}
       <div class="stat"><span class="k">Ắc quy</span><span class="v" id="vVolt">--</span><span class="u">V</span></div>
       <div class="stat" id="statFuel" hidden><span class="k">Xăng</span><span class="v" id="vFuel">--</span><span class="u">%</span></div>
     </section>
+    </div>
 
     <section class="card tirecard" aria-labelledby="tireTitle">
       <div class="card-head"><h2 id="tireTitle">Áp suất lốp</h2><span class="hint" id="tireHint"></span></div>
@@ -346,6 +380,7 @@ img{max-width:100%}
       </div>
     </section>
 
+  </div>
   </div>
 
   <section class="card" id="ccCard" aria-labelledby="ccTitle">
@@ -480,9 +515,10 @@ img{max-width:100%}
 
   <footer class="foot">
     <p>Tốc độ trên trang là tốc độ thực đọc từ OBD, thường thấp hơn kim đồng hồ trên xe vài km/h; máy bắn tốc độ cũng đo tốc độ thực. Số chuyển vàng khi còn 3 km/h là chạm giới hạn, chuyển đỏ và bíp khi đã vượt.</p>
-    <p>Bản 5.1 · 8/11/2026. Nước mát, vòng tua, tốc độ, khí nạp đọc bằng mã OBD chuẩn. Nhiệt độ dầu dùng mã PID 5C, đã đối chiếu ngày 7/11: trang đọc 112°C, mã riêng của BMW cũng ra 112.5°C, kim đồng hồ xe gần vạch 120.</p>
+    <p>Bản 5.2 · 15/11/2026. Nước mát, vòng tua, tốc độ, khí nạp đọc bằng mã OBD chuẩn. Nhiệt độ dầu dùng mã PID 5C, đã đối chiếu ngày 7/11: trang đọc 112°C, mã riêng của BMW cũng ra 112.5°C, kim đồng hồ xe gần vạch 120.</p>
     <p>Cảnh báo thiếu nước làm mát, nước rửa kính, dầu máy và lỗi lốp lấy từ lịch sử thông báo của xe, nên chỉ hiện sau khi xe đã báo trên đồng hồ. Áp suất và nhiệt độ 4 lốp đọc từ hộp DSC, nơi chứa chức năng theo dõi áp suất lốp trên F30; đã đối chiếu với iDrive ngày 8/11. Số chỉ cập nhật khi xe chạy, giống iDrive.</p>
     <p>Khi xe tắt máy, trang tự ngừng đọc và ngắt vLinker để không giữ các hộp điều khiển của xe thức, có thể tắt trong Cài đặt. Cổng OBD luôn có điện nên trang không cắt điện vLinker được; vLinker tự ngủ khi không còn ai kết nối và tự thức khi nổ máy.</p>
+    <p>Bản 5.2: màn hình ngang dạng buồng lái, tự đổi khi xoay điện thoại; nút xoay cạnh nút toàn màn hình để khóa ngang mà không cần bật tự động xoay.</p>
     <p>Bản 5 thêm: đèn check engine và mã lỗi động cơ (mã OBD chuẩn), ắc quy và máy phát, nhắc máy còn nguội, lốp nóng bất thường, lốp xì chậm (cần vài ngày dữ liệu), thông báo mới của xe trong chuyến, mức xăng nếu xe trả lời. Tên thông báo theo danh sách CC-ID công khai, có thể chưa đúng hết với F30.</p>
     <p>Đặt điện thoại trên giá, không thao tác khi đang lái.</p>
   </footer>
@@ -491,7 +527,7 @@ img{max-width:100%}
 <script>
 (function(){
 'use strict';
-const VERSION='Bản 5.1';
+const VERSION='Bản 5.2';
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const fmt=(v,d=0)=>(v==null||!isFinite(v))?'--':Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -1244,6 +1280,7 @@ function renderHist(d){
 function render(){
   const d=mode==='demo'?SAMPLE:live;
   $('demoBanner').hidden=mode!=='demo';
+  document.body.classList.toggle('is-demo',mode==='demo');
   gauge($('gCoolant'),d.coolant,40,130,settings.coolantMax);
   gauge($('gOil'),d.oil,40,150,settings.oilMax);
   $('srcOil').textContent=mode==='demo'?'Dữ liệu mẫu':oilSrc?oilSrc.label+' · đã đối chiếu':'Chưa đọc được';
@@ -1331,6 +1368,38 @@ function renderBeep(){
 $('btnBeep').addEventListener('click',()=>{settings.beep=!settings.beep;saveSettings();renderBeep();if(settings.beep){ensureAudio();beep();}});
 renderBeep();
 $('warnBar').addEventListener('click',()=>{$('ccCard').scrollIntoView({behavior:'smooth',block:'start'});});
+/* Nút xoay ngang: Chrome Android chỉ cho khóa chiều màn hình khi đang toàn màn hình */
+const ROT_LAND='<path d="M3 8h13a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H3z"/><path d="M7 4h10a4 4 0 0 1 4 4v1"/><path d="M19 7l2 2 2-2"/>';
+const ROT_PORT='<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>';
+let rotLocked=false,toastTimer=null;
+function toast(t){const el=$('toast');el.textContent=t;el.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{el.hidden=true;},6000);}
+function renderRot(){
+  const b=$('btnRotate'),lab=rotLocked?'Về màn hình dọc':'Xoay ngang';
+  b.setAttribute('aria-pressed',rotLocked?'true':'false');b.setAttribute('aria-label',lab);b.title=lab;
+  b.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(rotLocked?ROT_PORT:ROT_LAND)+'</svg>';
+}
+async function toggleRotate(){
+  const d=document,el=d.documentElement,so=screen.orientation;
+  if(rotLocked){
+    try{so&&so.unlock&&so.unlock();}catch(e){}
+    rotLocked=false;
+    try{if(d.fullscreenElement||d.webkitFullscreenElement)await (d.exitFullscreen||d.webkitExitFullscreen).call(d);}catch(e){}
+    renderRot();return;
+  }
+  try{
+    if(!so||!so.lock)throw new Error('no-lock');
+    if(!(d.fullscreenElement||d.webkitFullscreenElement)){const rf=el.requestFullscreen||el.webkitRequestFullscreen;if(rf)await rf.call(el,{navigationUI:'hide'});}
+    await so.lock('landscape');
+    rotLocked=true;
+  }catch(e){
+    rotLocked=false;
+    toast('Điện thoại không cho trang tự xoay. Bật Tự động xoay màn hình trong cài đặt nhanh rồi xoay ngang máy, trang tự đổi sang màn hình ngang.');
+  }
+  renderRot();
+}
+$('btnRotate').addEventListener('click',toggleRotate);
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&rotLocked){rotLocked=false;renderRot();}});
+renderRot();
 $('btnFs').addEventListener('click',()=>{
   const d=document,el=d.documentElement;
   try{
