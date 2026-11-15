@@ -34,6 +34,8 @@
   --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
   color-scheme:dark;
 }
+/* Tắt cử chỉ kéo xuống để tải lại của Chrome: lỡ tay tải lại khi đang chạy sẽ cắt kết nối vLinker */
+html,body{overscroll-behavior-y:none}
 html{background:var(--ink)}
 body{
   background:var(--ink);color:var(--text);font-family:var(--f-body);font-size:15px;line-height:1.5;
@@ -391,11 +393,11 @@ img{max-width:100%}
   <section class="card" id="histCard" aria-labelledby="histTitle">
     <div class="card-head"><h2 id="histTitle">Thông báo của xe</h2><span class="hint" id="histOdo"></span></div>
     <ul class="hist" id="histList"></ul>
-    <p class="muted" style="margin-top:8px">Các thông báo xe đã hiện trên đồng hồ, kèm số km lúc báo, đọc từ cụm đồng hồ. Báo thiếu nước rửa kính, nước làm mát, dầu máy hay lỗi lốp trong vòng 300 km gần nhất sẽ hiện ở mục Cảnh báo.</p>
+    <p class="muted" style="margin-top:8px">Các thông báo xe đã hiện trên đồng hồ, kèm số km lúc báo, đọc từ cụm đồng hồ. Cụm đồng hồ chỉ giữ 6 thông báo gần nhất. Báo về tình trạng xe (nước rửa kính, nước làm mát, dầu, lốp, pin chìa khóa, má phanh…) trong vòng 300 km gần nhất sẽ hiện ở mục Cảnh báo.</p>
     <details class="sub">
       <summary>Thử tìm danh sách thông báo đang hiện</summary>
       <div class="dbody2">
-        <p class="muted">Đỗ xe, máy nổ. Bấm Ghi lần 1. Mở nắp capo, đợi đồng hồ hiện thông báo, bấm Ghi lần 2. Đóng capo, bấm Ghi lần 3. Rồi bấm Sao chép nhật ký và gửi cho Claude.</p>
+        <p class="muted">Dùng khi xe đang báo một thông báo, ví dụ nước rửa kính thấp. Đỗ xe, máy nổ, bấm Ghi lần 1 (chờ khoảng 30 giây). Châm nước rửa kính, đợi thông báo tắt, bấm Ghi lần 2. Rồi bấm Sao chép nhật ký và gửi cho Claude.</p>
         <div class="row"><button class="btn small" id="btnCcSnap" type="button" data-lab disabled>Ghi</button><button class="btn small" id="btnCopy2" type="button">Sao chép nhật ký</button><span class="copymsg" id="copyMsg2" aria-live="polite"></span></div>
       </div>
     </details>
@@ -515,9 +517,10 @@ img{max-width:100%}
 
   <footer class="foot">
     <p>Tốc độ trên trang là tốc độ thực đọc từ OBD, thường thấp hơn kim đồng hồ trên xe vài km/h; máy bắn tốc độ cũng đo tốc độ thực. Số chuyển vàng khi còn 3 km/h là chạm giới hạn, chuyển đỏ và bíp khi đã vượt.</p>
-    <p>Bản 5.2 · 15/11/2026. Nước mát, vòng tua, tốc độ, khí nạp đọc bằng mã OBD chuẩn. Nhiệt độ dầu dùng mã PID 5C, đã đối chiếu ngày 7/11: trang đọc 112°C, mã riêng của BMW cũng ra 112.5°C, kim đồng hồ xe gần vạch 120.</p>
+    <p>Bản 5.3 · 15/11/2026. Nước mát, vòng tua, tốc độ, khí nạp đọc bằng mã OBD chuẩn. Nhiệt độ dầu dùng mã PID 5C, đã đối chiếu ngày 7/11: trang đọc 112°C, mã riêng của BMW cũng ra 112.5°C, kim đồng hồ xe gần vạch 120.</p>
     <p>Cảnh báo thiếu nước làm mát, nước rửa kính, dầu máy và lỗi lốp lấy từ lịch sử thông báo của xe, nên chỉ hiện sau khi xe đã báo trên đồng hồ. Áp suất và nhiệt độ 4 lốp đọc từ hộp DSC, nơi chứa chức năng theo dõi áp suất lốp trên F30; đã đối chiếu với iDrive ngày 8/11. Số chỉ cập nhật khi xe chạy, giống iDrive.</p>
     <p>Khi xe tắt máy, trang tự ngừng đọc và ngắt vLinker để không giữ các hộp điều khiển của xe thức, có thể tắt trong Cài đặt. Cổng OBD luôn có điện nên trang không cắt điện vLinker được; vLinker tự ngủ khi không còn ai kết nối và tự thức khi nổ máy.</p>
+    <p>Bản 5.3: mục Thông báo của xe hiện cả các thông báo về tình trạng xe trong 300 km gần nhất (pin chìa khóa, má phanh, đèn, bảo dưỡng), không chỉ trong chuyến; tính đúng số km của lịch sử thông báo (thấp hơn số trên đồng hồ 3 km). Quét lỗi ghi rõ bao nhiêu hộp trả lời và chờ đúng cách khi hộp báo đang bận. Bluetooth không còn ghi chồng lệnh; tự thử kết nối lại một lần; tắt cử chỉ kéo xuống để tải lại trang.</p>
     <p>Bản 5.2: màn hình ngang dạng buồng lái, tự đổi khi xoay điện thoại; nút xoay cạnh nút toàn màn hình để khóa ngang mà không cần bật tự động xoay.</p>
     <p>Bản 5 thêm: đèn check engine và mã lỗi động cơ (mã OBD chuẩn), ắc quy và máy phát, nhắc máy còn nguội, lốp nóng bất thường, lốp xì chậm (cần vài ngày dữ liệu), thông báo mới của xe trong chuyến, mức xăng nếu xe trả lời. Tên thông báo theo danh sách CC-ID công khai, có thể chưa đúng hết với F30.</p>
     <p>Đặt điện thoại trên giá, không thao tác khi đang lái.</p>
@@ -527,7 +530,7 @@ img{max-width:100%}
 <script>
 (function(){
 'use strict';
-const VERSION='Bản 5.2';
+const VERSION='Bản 5.3';
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const fmt=(v,d=0)=>(v==null||!isFinite(v))?'--':Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -556,12 +559,12 @@ function saveSettings(){try{localStorage.setItem(SKEY,JSON.stringify(settings));
 if(!settings.mig4){if(settings.tireWarn===2)settings.tireWarn=1.8;settings.mig4=true;saveSettings();}
 
 /* ---------- Dữ liệu ---------- */
-function emptyLive(){return{coolant:null,oil:null,rpm:null,speed:null,intake:null,volt:null,tires:{FL:null,FR:null,RL:null,RR:null},coolantLevel:null,washer:null,oilLevel:null,cc:null,odo:null,mil:null,dtcs:null,pend:null,fuel:null,tripOdo:null,vLow:false,vCrit:false};}
+function emptyLive(){return{coolant:null,oil:null,rpm:null,speed:null,intake:null,volt:null,tires:{FL:null,FR:null,RL:null,RR:null},coolantLevel:null,washer:null,oilLevel:null,cc:null,odo:null,ccKm:null,mil:null,dtcs:null,pend:null,fuel:null,tripOdo:null,vLow:false,vCrit:false};}
 let live=emptyLive();
 const SAMPLE={coolant:96,oil:104,rpm:1850,speed:57,intake:34,volt:14.1,
   tires:{FL:{bar:2.3,c:31},FR:{bar:2.3,c:32},RL:{bar:2.5,c:30},RR:{bar:1.8,c:29}},
   coolantLevel:false,washer:true,oilLevel:false,svcDate:isoLocal(45),svcKm:8500,
-  cc:[{id:71,km:127750},{id:164,km:127745},{id:811,km:126008},{id:147,km:122422}],odo:127757,tripOdo:127740,
+  cc:[{id:71,km:127750},{id:164,km:127745},{id:67,km:127690},{id:811,km:126008},{id:147,km:122422}],odo:127757,ccKm:127754,tripOdo:127740,
   mil:false,dtcs:[],pend:[],fuel:46,vLow:false,vCrit:false};
 let mode='demo';
 
@@ -578,7 +581,7 @@ let oilSrc=null;
    Đối chiếu ngày 8/11 15:08: 1.975/2.000/2.075/2.050 bar, 38/39/35/35°C; iDrive 1.9/1.9/2.0/2.0 bar, 38/39/36/35°C. */
 const TIRE_SOURCE='DSC';
 const TIRE_DIDS=[['FL',0xDC98],['FR',0xDC99],['RL',0xDC9A],['RR',0xDC9B]];
-let tireLast=0,tireLogged=false;
+let tireLast=0,tireLogged=0;
 async function readTires(){
   tireLast=Date.now();
   const got=[];
@@ -590,7 +593,8 @@ async function readTires(){
     live.tires[k]={bar:p/1000,c:t,ref:(ref>0&&ref<6000)?ref/1000:null};
     got.push(k+' '+(p/1000).toFixed(3)+' bar '+t+'°C');
   }
-  if(got.length&&!tireLogged){tireLogged=true;log('Áp suất lốp từ DSC: '+got.join(', '));}
+  /* Ghi nhật ký lần đầu có số, và ghi lại khi đủ 4 bánh (cảm biến thức dậy lần lượt khi bánh bắt đầu lăn) */
+  if(got.length>tireLogged&&(tireLogged===0||got.length===4)){tireLogged=got.length;log('Áp suất lốp từ DSC: '+got.join(', '));}
   recordTireHist();
 }
 
@@ -633,12 +637,22 @@ function onNotify(e){
   const i=rxBuf.indexOf('>');
   if(i>=0&&waiter){const out=rxBuf.slice(0,i);rxBuf=rxBuf.slice(i+1);const w=waiter;waiter=null;clearTimeout(w.timer);w.resolve(out);}
 }
-async function writeRaw(str){
+/* Ghi Bluetooth lần lượt: lệnh sau chỉ ghi khi lệnh trước ghi xong, kể cả khi lệnh trước đã hết giờ chờ trả lời.
+   Trước bản 5.3, ghi chồng gây lỗi "GATT operation already in progress". */
+let writing=Promise.resolve();
+async function writeChunk(chunk){
+  const w=()=>useNoResp?txChar.writeValueWithoutResponse(chunk):txChar.writeValue(chunk);
+  try{await w();}
+  catch(e){if(txChar&&/in progress|unknown reason/i.test(e&&e.message||'')){await sleep(300);await w();}else throw e;}
+}
+function writeRaw(str){
   const bytes=enc.encode(str);
-  for(let i=0;i<bytes.length;i+=20){
-    const chunk=bytes.slice(i,i+20);
-    if(useNoResp)await txChar.writeValueWithoutResponse(chunk);else await txChar.writeValue(chunk);
-  }
+  const p=Promise.race([writing,sleep(2500)]).then(async()=>{
+    if(!txChar)throw new Error('Chưa kết nối');
+    for(let i=0;i<bytes.length;i+=20)await writeChunk(bytes.slice(i,i+20));
+  });
+  writing=p.catch(()=>{});
+  return p;
 }
 /* count: số khung trả lời cần chờ. vLinker trả về ngay khi đủ, nhanh hơn nhiều khi dò hàng nghìn mã */
 function send(line,timeout=3000,count=0){
@@ -668,36 +682,54 @@ async function setIds(tx,rx){
   if(rx!==curRx){await send('ATCRA'+rx);curRx=rx;}
 }
 /* ISO-TP tự xử lý (ATCAF0) để hỗ trợ địa chỉ mở rộng của BMW: gửi 6F1 + byte hộp, nhận 6xx + F1 */
+function firstFrame(list,ext){
+  for(const f of list){
+    const d=ext==null?f:(f[0]===0xF1?f.slice(1):null);
+    if(!d)continue;
+    const t=d[0]>>4;
+    if(t===0)return{out:d.slice(1,1+(d[0]&15)),total:0};
+    if(t===1)return{out:d.slice(2),total:((d[0]&15)<<8)|d[1]};
+  }
+  return null;
+}
+async function restFrames(tx,rx,ext,pre,ff){
+  let out=ff.out;
+  const need=Math.ceil(Math.max(0,ff.total-(ext==null?6:5))/(ext==null?7:6));
+  if(tx==='7DF'){await send('ATSH7E0');curTx='7E0';}
+  const more=frames(await send(hexs(pad8([...pre,0x30,0x00,0x00])),3000,need),rx);
+  for(const f of more){
+    const d=ext==null?f:(f[0]===0xF1?f.slice(1):null);
+    if(!d||(d[0]>>4)!==2)continue;
+    out=out.concat(d.slice(1));
+  }
+  return out.slice(0,ff.total);
+}
+const isPending=o=>o&&o[0]===0x7F&&o[2]===0x78;
+/* Hộp trả lời 7F xx 78 = "đang xử lý, chờ chút": nghe tiếp câu trả lời thật, không gửi lại lệnh.
+   ELM327 chỉ nghe sau khi gửi một khung, nên gửi khung điều khiển luồng 30 00 00; hộp đang bận sẽ bỏ qua khung này theo chuẩn ISO-TP. */
+async function awaitPending(tx,rx,ext,pre){
+  await send('ATAT0');await send('ATSTFF');
+  try{
+    const end=Date.now()+8000;
+    while(Date.now()<end&&txChar){
+      const ff=firstFrame(frames(await send(hexs(pad8([...pre,0x30,0x00,0x00])),3000,1),rx),ext);
+      if(!ff)continue;
+      const out=ff.total?await restFrames(tx,rx,ext,pre,ff):ff.out;
+      if(isPending(out))continue;
+      return out;
+    }
+    return null;
+  }finally{await send('ATST32');await send('ATAT1');}
+}
 async function isotpInner(tx,rx,ext,payload){
   const pre=ext==null?[]:[ext];
   if(pre.length+1+payload.length>8)throw new Error('Lệnh quá dài');
   await setIds(tx,rx);
-  for(let attempt=0;attempt<3;attempt++){
-    const first=frames(await send(hexs(pad8([...pre,payload.length,...payload])),3000,1),rx);
-    let out=null,total=0;
-    for(const f of first){
-      const d=ext==null?f:(f[0]===0xF1?f.slice(1):null);
-      if(!d)continue;
-      const t=d[0]>>4;
-      if(t===0){out=d.slice(1,1+(d[0]&15));break;}
-      if(t===1){total=((d[0]&15)<<8)|d[1];out=d.slice(2);break;}
-    }
-    if(!out)return null;
-    if(total){
-      const need=Math.ceil(Math.max(0,total-(ext==null?6:5))/(ext==null?7:6));
-      if(tx==='7DF'){await send('ATSH7E0');curTx='7E0';}
-      const more=frames(await send(hexs(pad8([...pre,0x30,0x00,0x00])),3000,need),rx);
-      for(const f of more){
-        const d=ext==null?f:(f[0]===0xF1?f.slice(1):null);
-        if(!d||(d[0]>>4)!==2)continue;
-        out=out.concat(d.slice(1));
-      }
-      out=out.slice(0,total);
-    }
-    if(out[0]===0x7F&&out[2]===0x78){await sleep(250);continue;}
-    return out;
-  }
-  return null;
+  const ff=firstFrame(frames(await send(hexs(pad8([...pre,payload.length,...payload])),3000,1),rx),ext);
+  if(!ff)return null;
+  const out=ff.total?await restFrames(tx,rx,ext,pre,ff):ff.out;
+  if(isPending(out))return await awaitPending(tx,rx,ext,pre);
+  return out;
 }
 const isotp=(tx,rx,ext,payload)=>locked(()=>isotpInner(tx,rx,ext,payload));
 async function obd(modeId,pid){const r=await isotp('7DF','7E8',null,[modeId,pid]);if(!r||r[0]!==modeId+0x40||r[1]!==pid)return null;return r.slice(2);}
@@ -763,12 +795,17 @@ async function openGatt(d){
     if(n&&w){found={s,n,w};break;}
   }
   if(!found)throw new Error('Không tìm thấy kênh dữ liệu. Hãy chọn đúng thiết bị tên vLinker.');
-  rxBuf='';waiter=null;curTx='';curRx='';
+  rxBuf='';waiter=null;curTx='';curRx='';writing=Promise.resolve();
   await found.n.startNotifications();
   found.n.addEventListener('characteristicvaluechanged',onNotify);
   rxChar=found.n;txChar=found.w;
   useNoResp=!!txChar.properties.writeWithoutResponse&&typeof txChar.writeValueWithoutResponse==='function';
   return found.s.uuid;
+}
+/* Ngay sau khi tải lại trang, Android đôi khi chưa nhả kết nối cũ: thử lại một lần sau 1.5 giây */
+async function openGattRetry(d){
+  try{return await openGatt(d);}
+  catch(e){try{if(d.gatt.connected)d.gatt.disconnect();}catch(_){}await sleep(1500);return await openGatt(d);}
 }
 function attach(d){if(d.__f30)return;d.__f30=true;d.addEventListener('gattserverdisconnected',onDisconnect);}
 async function startSession(){
@@ -794,7 +831,7 @@ async function connect(){
       if(d){
         try{
           attach(d);setPill('busy','Đang kết nối '+(d.name||'')+'…');
-          const u=await withTimeout(openGatt(d),9000,'hết thời gian chờ');
+          const u=await withTimeout(openGattRetry(d),16000,'hết thời gian chờ');
           dev=d;log('Đã kết nối '+(d.name||'thiết bị')+' · kênh '+u);
           await startSession();return;
         }catch(e){
@@ -810,7 +847,7 @@ async function connect(){
     const d=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:SERVICES});
     attach(d);dev=d;
     setPill('busy','Đang kết nối…');
-    const u=await openGatt(d);
+    const u=await openGattRetry(d);
     log('Đã kết nối '+(d.name||'thiết bị')+' · kênh '+u);
     await startSession();
   }catch(e){
@@ -893,6 +930,17 @@ const CC_INFO={
   557:['Xe có thể trôi, cần cài số P']
 };
 const CC_RECENT_KM=300;
+/* Sự kiện tức thời (cửa, capo, xe có thể trôi): chỉ đưa lên Cảnh báo nếu xảy ra trong chuyến này */
+const CC_EVENT=[14,15,16,17,18,19,811,557];
+/* Mã 34: xe báo đầu mỗi chuyến, chưa có trong danh sách công khai; không đưa lên Cảnh báo cho đến khi biết tên */
+const CC_QUIET=[34];
+/* Số km trong lịch sử thông báo là số km gốc (D122), thấp hơn số km hiện trên đồng hồ (D10D) đúng phần bù D114, xe này là 3 km.
+   Mọi phép so sánh với lịch sử dùng số km gốc. */
+const ccNowKm=d=>d.ccKm!=null?d.ccKm:(d.odo!=null?d.odo-3:null);
+/* Chuyến đi: giữ qua các lần tải lại trang hoặc mất kết nối dưới 20 phút */
+const TRIP_KEY='f30-trip-v1';
+function tripLoad(){try{return JSON.parse(localStorage.getItem(TRIP_KEY)||'null');}catch(e){return null;}}
+function tripSave(s){try{localStorage.setItem(TRIP_KEY,JSON.stringify({s,t:Date.now()}));}catch(e){}}
 let ccLast=0,ccSig='';
 function parseCcHist(d){
   const out=[];
@@ -907,13 +955,22 @@ async function readCC(){
   ccLast=Date.now();
   const o=await readDid(0x60,0xD10D);
   if(o.ok&&o.data.length>=4){const v=((o.data[0]<<24)|(o.data[1]<<16)|(o.data[2]<<8)|o.data[3])>>>0;if(v>0&&v<3000000)live.odo=v;}
+  const g=await readDid(0x60,0xD122);
+  if(g.ok&&g.data.length>=4){const v=((g.data[0]<<24)|(g.data[1]<<16)|(g.data[2]<<8)|g.data[3])>>>0;if(v>0&&v<3000000&&(live.odo==null||Math.abs(live.odo-v)<50))live.ccKm=v;}
   const h=await readDid(0x60,0xD12D);
   if(h.ok){
     const list=parseCcHist(h.data),sig=JSON.stringify(list);
-    if(sig!==ccSig){ccSig=sig;log('Thông báo của xe (mã@km): '+(list.map(e=>e.id+'@'+e.km).join(', ')||'không có')+(live.odo!=null?' · ODO '+live.odo:''));}
+    if(sig!==ccSig){ccSig=sig;log('Thông báo của xe (mã@km): '+(list.map(e=>e.id+'@'+e.km).join(', ')||'không có')+(live.odo!=null?' · ODO '+live.odo:'')+(live.ccKm!=null?' · km gốc '+live.ccKm:''));}
     live.cc=list;
   }
-  if(live.tripOdo==null&&live.odo!=null)live.tripOdo=live.odo;
+  const now=ccNowKm(live);
+  if(now!=null){
+    if(live.tripOdo==null){
+      const t=tripLoad();
+      live.tripOdo=(t&&Date.now()-t.t<20*60000&&now>=t.s&&now-t.s<1500)?t.s:now;
+    }
+    tripSave(live.tripOdo);
+  }
 }
 /* Các mã trả lời "chưa đủ điều kiện" hoặc "đang bận" khi đỗ xe ngày 7/11; thử lại khi xe chạy để tìm số áp suất lốp */
 const PROBE=[[0x40,0xD073],[0x40,0xD074],[0x40,0xD08B],[0x40,0xD347],[0x40,0xD369],[0x40,0xD36A],[0x40,0xD389],[0x40,0xD399],[0x40,0xD39A],[0x40,0xD39B],[0x40,0xD3BE],[0x40,0xDA0D],[0x40,0xDBEA],[0x40,0xDBEB],[0x40,0xDC83],[0x40,0xDC84],[0x40,0xDC85],[0x40,0x4910],
@@ -935,12 +992,25 @@ async function probeStep(){
   probeSeen[k]=v;probeAt[k]=now;
   log((watch?'Theo dõi':'Đọc được')+' lúc xe '+fmt(live.speed)+' km/h: '+k+' = '+v);
 }
-const SNAP=[0xD106,0xD107,0xD10A,0xD10B,0xD10D,0xD10E,0xD111,0xD112,0xD114,0xD11F,0xD121,0xD122,0xD125,0xD12C,0xD12D,0xD12F];
-let snapN=0;
+/* Bản 5.3: đọc cả dải D100–D1FF và A100–A11F của cụm đồng hồ để tìm nơi giữ danh sách thông báo đang hiện.
+   Lần 1 ghi hết các mã có dữ liệu; các lần sau chỉ ghi mã đổi so với lần trước. Chỉ đọc. */
+let snapN=0,snapPrev=null;
 async function ccSnap(){
-  snapN++;log('— Ghi thông báo xe lần '+snapN+' —');
-  for(const did of SNAP){const r=await readDid(0x60,did);log('60 '+didStr(did)+' '+(r.ok?'= '+hexs(r.data):r.none?'không trả lời':'! '+hx(r.nrc==null?0:r.nrc)));}
-  log('— Hết lần '+snapN+' —');
+  snapN++;log('— Ghi thông báo xe lần '+snapN+' · đọc khoảng 300 mã của cụm đồng hồ, chờ chừng 30 giây —');
+  const dids=[];for(let x=0xD100;x<=0xD1FF;x++)dids.push(x);for(let x=0xA100;x<=0xA11F;x++)dids.push(x);
+  const cur={};let same=0,i=0;
+  for(const did of dids){
+    if(stopFlag||!txChar)break;
+    if(++i%32===0)prog('Ghi lần '+snapN+': '+i+'/'+dids.length);
+    const r=await readDid(0x60,did);
+    if(!r.ok)continue;
+    const v=hexs(r.data);cur[did]=v;
+    if(snapPrev&&snapPrev[did]===v){same++;continue;}
+    log('60 '+didStr(did)+(snapPrev?(snapPrev[did]==null?' mới':' đổi')+' = ':' = ')+v);
+  }
+  if(snapPrev)for(const k of Object.keys(snapPrev))if(cur[k]==null&&!stopFlag)log('60 '+didStr(+k)+' không còn trả lời');
+  log('— Hết lần '+snapN+': '+Object.keys(cur).length+' mã có dữ liệu'+(snapPrev?', '+same+' mã giống lần trước':'')+' —');
+  snapPrev=cur;prog('');
 }
 /* Đèn check engine và mã lỗi động cơ: mã OBD chuẩn, mode 01 PID 01, mode 03 (đã lưu), mode 07 (chờ xác nhận) */
 const PCODES=[[0x0010,0x0015,'Điều chỉnh trục cam (VANOS)'],[0x0016,0x0019,'Lệch pha trục cam và trục khuỷu'],[0x0030,0x0064,'Cảm biến oxy hoặc bộ sấy'],
@@ -1028,7 +1098,7 @@ async function readEcuFaults(ecu){
   const r=await uds(ecu,[0x19,0x02,0x0D]);
   if(!r)return{none:true};
   if(r[0]===0x7F)return{nrc:r[2]};
-  if(r[0]!==0x59||r[1]!==0x02)return{bad:true};
+  if(r[0]!==0x59||r[1]!==0x02)return{bad:true,raw:r};
   const recs=[];
   for(let i=3;i+3<r.length;i+=4)recs.push({c:(r[i]<<16)|(r[i+1]<<8)|r[i+2],s:r[i+3]});
   return{recs};
@@ -1036,14 +1106,25 @@ async function readEcuFaults(ecu){
 async function scanFaults(){
   const res={time:stamp(),ecus:{}};
   log('— Quét lỗi các hộp điều khiển —');
-  for(const a of FAULT_ECUS){
-    if(!txChar)break;
+  const short=a=>ecuName(a).split(' (')[0];
+  const miss=[];
+  const one=async a=>{
     const r=await readEcuFaults(a);
-    if(r.recs){res.ecus[a]=r.recs;if(r.recs.length)log(ecuName(a)+': '+r.recs.map(x=>hex6(x.c)+' ('+faultState(x.s)+')').join(', '));}
-    else if(r.nrc!=null)res.ecus[a]={nrc:r.nrc};
-  }
+    if(r.recs){res.ecus[a]=r.recs;if(r.recs.length)log(ecuName(a)+': '+r.recs.map(x=>hex6(x.c)+' ('+faultState(x.s)+')').join(', '));return true;}
+    if(r.nrc!=null){res.ecus[a]={nrc:r.nrc};return true;}
+    if(r.bad)log(short(a)+' trả lời lạ: '+hexs(r.raw.slice(0,12)));
+    return false;
+  };
+  for(const a of FAULT_ECUS){if(!txChar)break;if(!await one(a))miss.push(a);}
+  /* Hỏi lại một lần các hộp chưa trả lời (có hộp đang bận ngay lúc hỏi) */
+  const none=[];
+  for(const a of miss){if(!txChar)break;await sleep(200);if(!await one(a))none.push(a);}
   const total=Object.values(res.ecus).reduce((n,v)=>n+(Array.isArray(v)?v.length:0),0);
-  log('Quét lỗi xong: '+total+' lỗi ở '+Object.values(res.ecus).filter(v=>Array.isArray(v)&&v.length).length+' hộp.');
+  const okN=Object.values(res.ecus).filter(Array.isArray).length;
+  const ref=Object.entries(res.ecus).filter(([,v])=>!Array.isArray(v)).map(([a,v])=>short(+a)+' '+(NRC[v.nrc]||'NRC '+hx(v.nrc)));
+  res.answered=okN;res.total=FAULT_ECUS.length;
+  log('Quét lỗi xong: '+total+' lỗi ở '+Object.values(res.ecus).filter(v=>Array.isArray(v)&&v.length).length+' hộp · '+okN+'/'+FAULT_ECUS.length+' hộp trả lời'
+    +(none.length?' · không trả lời: '+none.map(short).join(', '):'')+(ref.length?' · từ chối: '+ref.join(', '):''));
   faults=res;
   if(!faultKnown){faultKnown=faultKeys(res);log('Lần quét đầu tiên: các lỗi hiện có được ghi nhận là lỗi cũ.');}
   saveFaults();render();
@@ -1064,8 +1145,9 @@ function renderFaults(){
     const isNew=v.some(x=>nset.has(a+':'+x.c));
     rows.push('<li class="'+(isNew?'warn':'')+'"><span class="nm">'+ecuName(a)+' · '+v.length+' lỗi'+(isNew?' · có lỗi mới':'')+'</span><span class="km">'+v.map(x=>hex6(x.c)+' '+faultState(x.s)).join(', ')+'</span></li>');
   }
-  ul.innerHTML=rows.length?rows.join(''):'<li><span class="muted">Không hộp nào có lỗi.</span></li>';
-  $('faultHint').textContent='Quét lúc '+faults.time.slice(11)+' '+faults.time.slice(8,10)+'/'+faults.time.slice(5,7);
+  const noneAns=faults.total&&!faults.answered;
+  ul.innerHTML=rows.length?rows.join(''):'<li><span class="muted">'+(noneAns?'Không hộp nào trả lời nên chưa biết có lỗi hay không. Bấm Quét lỗi khi xe đứng yên, máy nổ.':'Không hộp nào có lỗi'+(faults.total&&faults.answered<faults.total?' trong '+faults.answered+' hộp đã trả lời':'')+'.')+'</span></li>';
+  $('faultHint').textContent='Quét lúc '+faults.time.slice(11)+' '+faults.time.slice(8,10)+'/'+faults.time.slice(5,7)+(faults.total?' · '+faults.answered+'/'+faults.total+' hộp trả lời':'');
   $('btnFaultAck').hidden=!nf.length;
 }
 function autoOff(msg){
@@ -1164,14 +1246,24 @@ function svcInfo(d){
 }
 const ccName=id=>CC_INFO[id]?CC_INFO[id][0]:'Thông báo mã '+id;
 function ccHit(d,cat){
-  if(!Array.isArray(d.cc)||d.odo==null)return undefined;
-  return d.cc.find(e=>CC_INFO[e.id]&&CC_INFO[e.id][1]===cat&&d.odo-e.km<=CC_RECENT_KM&&e.km<=d.odo+5)||null;
+  const now=ccNowKm(d);
+  if(!Array.isArray(d.cc)||now==null)return undefined;
+  return d.cc.find(e=>CC_INFO[e.id]&&CC_INFO[e.id][1]===cat&&now-e.km<=CC_RECENT_KM&&e.km<=now+5)||null;
 }
-const ccAgo=(d,e)=>' ở km '+fmt(e.km)+(d.odo-e.km>0?', cách đây '+fmt(d.odo-e.km)+' km':'');
+const ccAgo=(d,e)=>{const g=ccNowKm(d)-e.km;return' ở km '+fmt(e.km)+(g>0?', cách đây '+fmt(g)+' km':', trong chuyến này');};
 const CC_COVERED=['oil','tire','washer','coolant'];
+/* Thông báo cho mục Cảnh báo: mọi thông báo trong chuyến này, cộng các thông báo về tình trạng xe
+   (pin chìa khóa, má phanh, đèn, bảo dưỡng…) trong 300 km gần nhất. Nhóm đã có mục riêng thì không lặp lại. */
 function ccTrip(d){
-  if(!Array.isArray(d.cc)||d.tripOdo==null)return undefined;
-  return d.cc.filter(e=>e.km>=d.tripOdo-2&&!(CC_INFO[e.id]&&CC_COVERED.includes(CC_INFO[e.id][1])));
+  const now=ccNowKm(d);
+  if(!Array.isArray(d.cc)||now==null)return undefined;
+  const start=d.tripOdo!=null?d.tripOdo:now;
+  return d.cc.filter(e=>{
+    const inf=CC_INFO[e.id];
+    if(CC_QUIET.includes(e.id)||(inf&&CC_COVERED.includes(inf[1])))return false;
+    if(e.km>=start-1)return true;
+    return !!inf&&!CC_EVENT.includes(e.id)&&now-e.km<=CC_RECENT_KM&&e.km<=now+5;
+  }).map(e=>({...e,trip:e.km>=start-1}));
 }
 function warnings(d){
   const items=[];
@@ -1254,14 +1346,15 @@ function warnings(d){
   }
   { const tr=ccTrip(d);
     if(tr!==undefined){
-      if(!tr.length)items.push({name:'Thông báo mới',s:'ok',det:'Xe không báo gì mới trong chuyến này'});
-      else items.push({name:'Thông báo mới',s:worst(tr.map(e=>CC_INFO[e.id]&&CC_INFO[e.id][2]||'info')),det:'Xe vừa báo: '+tr.map(e=>ccName(e.id)).join(', ')});
+      if(!tr.length)items.push({name:'Thông báo của xe',s:'ok',det:'Xe không báo gì mới'});
+      else items.push({name:'Thông báo của xe',s:worst(tr.map(e=>CC_INFO[e.id]&&CC_INFO[e.id][2]||'info')),det:tr.map(e=>ccName(e.id)+(e.trip?' (trong chuyến này)':' (km '+fmt(e.km)+', cách '+fmt(ccNowKm(d)-e.km)+' km)')).join(' · ')});
     }
   }
   if(mode==='live'&&faults){
     const nf=newFaults();
     if(nf.length)items.push({name:'Lỗi hộp điều khiển',s:nf.some(x=>x.s&1)?'warn':'info',det:'Lỗi mới: '+nf.map(x=>ecuName(x.a).split(' (')[0]+' '+hex6(x.c)).join(', ')});
-    else items.push({name:'Lỗi hộp điều khiển',s:'ok',det:'Không có lỗi mới'});
+    else if(faults.total&&!faults.answered)items.push({name:'Lỗi hộp điều khiển',s:'idle',det:'Chưa đọc được, không hộp nào trả lời'});
+    else items.push({name:'Lỗi hộp điều khiển',s:'ok',det:'Không có lỗi mới'+(faults.total&&faults.answered<faults.total?' ('+faults.answered+'/'+faults.total+' hộp trả lời)':'')});
   }
   if(d.fuel!=null&&d.fuel<10)items.push({name:'Xăng',s:'warn',det:'Sắp hết xăng, còn '+fmt(d.fuel)+'%'});
   return items;
@@ -1272,7 +1365,7 @@ function renderHist(d){
   if(!Array.isArray(d.cc)){ul.innerHTML='<li><span class="muted">Chưa đọc được. Trang tự đọc sau khi kết nối, lúc xe đang nổ máy.</span></li>';return;}
   if(!d.cc.length){ul.innerHTML='<li><span class="muted">Bộ nhớ không có thông báo nào.</span></li>';return;}
   ul.innerHTML=d.cc.map(e=>{
-    const inf=CC_INFO[e.id],gap=d.odo!=null?d.odo-e.km:null;
+    const inf=CC_INFO[e.id],now=ccNowKm(d),gap=now!=null?now-e.km:null;
     const cls=inf&&inf[1]&&gap!=null&&gap<=CC_RECENT_KM?(inf[2]==='crit'?'crit':'warn'):'';
     return '<li class="'+cls+'"><span class="nm">'+ccName(e.id)+'</span><span class="km">km '+fmt(e.km)+(gap!=null&&gap>=0?(gap===0?' · vừa báo':' · cách '+fmt(gap)+' km'):'')+'</span></li>';
   }).join('');
