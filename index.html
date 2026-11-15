@@ -598,7 +598,8 @@ async function readTires(){
   recordTireHist();
 }
 
-const ECU_NAMES={0x01:'ACSM (túi khí)',0x10:'ZGM (cổng trung tâm)',0x12:'DME (động cơ)',0x18:'EGS (hộp số)',0x29:'DSC (phanh, cân bằng)',0x30:'EPS (trợ lực lái)',0x40:'FEM (điện thân xe)',0x5E:'GWS (cần số)',0x60:'KOMBI (cụm đồng hồ)',0x63:'NBT (màn hình iDrive)',0x78:'IHKA (điều hòa)'};
+/* Tên hộp theo bảng địa chỉ chẩn đoán dòng F (xe đời 2016) */
+const ECU_NAMES={0x01:'ACSM (túi khí)',0x06:'TRSVC (camera lùi)',0x10:'FEM_GW (cổng trung tâm)',0x12:'DME (động cơ)',0x18:'EGS (hộp số)',0x1C:'ICM (khung gầm)',0x29:'DSC (phanh, cân bằng)',0x30:'EPS (trợ lực lái)',0x40:'FEM (điện thân xe trước)',0x43:'LHM (đèn pha LED)',0x44:'LHM (đèn pha LED)',0x5E:'GWS (cần số)',0x60:'KOMBI (cụm đồng hồ)',0x63:'NBT (màn hình iDrive)',0x67:'ZBE (núm iDrive)',0x6D:'SM (ghế)',0x72:'REM (điện thân xe sau)',0x78:'IHKA (điều hòa)'};
 const NRC={0x10:'từ chối chung',0x11:'không hỗ trợ dịch vụ',0x12:'không hỗ trợ',0x13:'sai độ dài',0x22:'chưa đủ điều kiện',0x31:'không có mã này',0x33:'cần mở khóa bảo mật',0x7E:'cần đổi chế độ',0x7F:'cần đổi chế độ'};
 
 /* ---------- Nhật ký ---------- */
